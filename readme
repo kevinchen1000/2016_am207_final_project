@@ -1,0 +1,9 @@
+#this is a simple readme file
+
+the project needs the following parts:
+
+1. class Plotter: display the template and objects in the tiling process
+
+2. class Solver: Simulated annealing and stochastic gradient descent implementation
+
+3. class polygon and circle: with functions of collision detection.
