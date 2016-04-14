@@ -5,6 +5,8 @@ from matplotlib.collections import EllipseCollection
 import numpy as np
 from timer import Timer
 import time
+import matplotlib
+matplotlib.get_backend()
 
 def plot_template(l = 20.0, w = 20.0):
   x_pos = [-l/2, l/2, l/2, -l/2, -l/2 ]
@@ -42,12 +44,14 @@ class Animator(object):
         ax.get_yaxis().set_visible(False)
         ax.set_axis_bgcolor('black')
         plt.draw()
-        plt.show()
+        #plt.show()
+        plt.savefig('foo.png')
 
     def update(self, positions):
         self.circles.set_offsets(positions)
         plt.draw()
         plt.show()
+        plt.savefig('foo1.png')
 
 '''
 if __name__ == '__main__':
@@ -61,6 +65,7 @@ if __name__ == '__main__':
 '''
 
 if __name__ == '__main__':
+    print matplotlib.get_backend()
     num_balls = 10000
     radius = 0.004
     positions = np.random.uniform(0 + radius, 1 - radius,
