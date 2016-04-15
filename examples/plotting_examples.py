@@ -44,14 +44,16 @@ class Animator(object):
         ax.get_yaxis().set_visible(False)
         ax.set_axis_bgcolor('black')
         plt.draw()
+        plt.pause(0.1)
         #plt.show()
-        plt.savefig('foo.png')
+        #plt.savefig('foo.png')
 
     def update(self, positions):
         self.circles.set_offsets(positions)
         plt.draw()
-        plt.show()
-        plt.savefig('foo1.png')
+        #plt.show()
+        plt.pause(0.1)
+        #plt.savefig('foo1.png')
 
 '''
 if __name__ == '__main__':
