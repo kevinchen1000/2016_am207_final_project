@@ -1,6 +1,7 @@
 #script that defines the objects type to be tiled
 #for now, includes circles and convex polygons
 import numpy as np
+import copy
 
 
 #helper functions
@@ -305,7 +306,8 @@ class object_lists:
         poly_collision = [None] * len(self.polygons)
 
         for i in range(self.num_polygons):
-            temp_verts= self.polygons[i].verts
+            temp_verts= copy.deepcopy(self.polygons[i].verts)
+            #print 'temp_verts =', temp_verts
             poly_verts[i] = temp_verts
             for j in range(len(self.polygons[i].verts)):
                 poly_verts[i][j] = tuple(np.array(temp_verts[j]) + self.polygons[i].offset)
@@ -321,9 +323,34 @@ class object_lists:
 
         for i in range(self.num_polygons+ self.num_circles):
             if isinstance(all_objects[i],obj_circle):
-                print 'circle object ', i, ',area =', all_objects[i].area
+                print 'circle object ', i, ',area =', all_objects[i].area, 'pos = ',all_objects[i].pos
             else:
-                print 'polygon object ', i, ',area =', all_objects[i].area
+                print 'polygon object ', i, ',area =', all_objects[i].area, 'pos = ', all_objects[i].offset
+
+    '''update delta position'''
+    #dx is a numpy array of size num_objects x 2
+    def update_delta_pos(self,dx):
+        #update circle offsets and polygon offsets
+        all_objects = self.circles + self.polygons
+        for i in range(self.num_polygons + self.num_circles):
+            if isinstance(all_objects[i],obj_circle):
+                all_objects[i].pos += dx[i]
+            else:
+                all_objects[i].offset += dx[i]
+
+        #re-compute all information due to change of positions....................
+        #compute distance matrix of every object to other objects
+        self.dist_mat = self.generate_distance_matrix()
+
+        #compute collision matrix (0 is not collide, 1 is collide with all other objects)
+        #compute collision_free vector (True or False) , whether each object is free
+        self.collision_mat,self.collision_vec= self.generate_collision_matrix() 
+
+        #for plotting circles
+        self.circ_diameter, self.circ_position, self.circ_collision = self.generate_circ_info()
+
+        #for plotting polygons
+        self.poly_verts, self.poly_collision = self.generate_poly_info()
 
 
 
@@ -351,14 +378,14 @@ if __name__ == '__main__':
     print 'testing collision checking...'
 
     #initialize a few circles and polygon objects
-    circ1 = obj_circle(np.array([0,0]),1.0)
+    circ1 = obj_circle(np.array([0.0,0.0]),1.0)
     circ2 = obj_circle(np.array([1.5,0]),1.0)
     circ3 = obj_circle(np.array([8.0,8.0]),2.0)
 
     #important: polygon must be defined in ccw order!!!
-    poly1 = obj_polygon([(0,0),(3,0),(3,2),(0,2),(0,0)],np.array([2,0]))
-    poly2 = obj_polygon([(0,0),(3,6),(0,4),(0,0)],np.array([3,0]))
-    poly3 = obj_polygon([(0,0),(2,0),(0,1),(0,0)],np.array([-6,0]))
+    poly1 = obj_polygon([(0,0),(3,0),(3,2),(0,2),(0,0)],np.array([2.0,0.0]))
+    poly2 = obj_polygon([(0,0),(3,6),(0,4),(0,0)],np.array([3.0,0.0]))
+    poly3 = obj_polygon([(0,0),(2,0),(0,1),(0,0)],np.array([-6.0,0.0]))
 
     print 'should be False, ', circ1.ifCollide(poly3)
     #assert(0)
@@ -370,6 +397,14 @@ if __name__ == '__main__':
     #formulate a list and do all pre-processing (finding distance + collision, etc)
     item_lists = object_lists(circ_list,poly_list)
     item_lists.print_items_info()
+    #print item_lists.poly_verts
+
+    delta_x = np.array([[1,0],[1,0],[1,0],[1,0],[1,0],[1,0]],dtype='float')
+
+    item_lists.update_delta_pos(delta_x)
+    item_lists.print_items_info()
+
+    #print item_lists.poly_verts
 
     #debug function
     #print if_intersect([0,0],[2,0],[1,1],[1,-1])
