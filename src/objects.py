@@ -70,6 +70,13 @@ class obj_circle:
         self.radius = radius
         self.area = np.pi * radius **2
 
+    ''' check is the polygon intersects or is out of the template'''
+    def isIn_template(self,template):
+        #template is given in a numpy array in form of [xmin,xmax,ymin,ymax]
+        xmin = self.pos[0]-self.radius;  xmax = self.pos[0]+self.radius; 
+        ymin = self.pos[1]-self.radius;  ymax = self.pos[1]+self.radius; 
+        return (xmin > template[0] and xmax < template[1] and ymin > template[2] and ymax < template[3])
+
     ''' compute distance to a circle'''
     def dist_to_circle(self,circle):
         assert(isinstance(circle,obj_circle))
@@ -130,6 +137,38 @@ class obj_polygon:
         self.verts = verts
         self.offset = offset
         self.area = self.polygon_area(self.verts)
+        self.centroid = self.polygon_centroid(self.verts,self.area)
+        self.bounding_box = self.find_bounding_box(self.verts)
+
+    ''' check is the polygon intersects or is out of the template'''
+    def isIn_template(self,template):
+        #template is given in a numpy array in form of [xmin,xmax,ymin,ymax]
+        xmin = self.bounding_box[0]+self.offset[0];  xmax = self.bounding_box[1]+self.offset[0]; 
+        ymin = self.bounding_box[2]+self.offset[1];  ymax = self.bounding_box[3]+self.offset[1]; 
+
+        #print 'template is', template
+        #print 'bounding box is', xmin,ymin,xmax,ymax
+        return (xmin > template[0] and xmax < template[1] and ymin > template[2] and ymax < template[3])
+
+    ''' find the bounding box [xmin,xmax,ymin,ymax] of the polygon with first vertex at (0,0)'''
+    def find_bounding_box(self,verts):
+        temp = np.array(verts)
+        min_vec= np.min(temp,axis=0)
+        max_vec= np.max(temp,axis=0)
+        #print temp,min_vec,max_vec
+        #print np.array([min_vec[0],max_vec[0],min_vec[1],max_vec[1]])
+        return np.array([min_vec[0],max_vec[0],min_vec[1],max_vec[1]])
+
+    ''' find the polygon centroid on ccw input vertices'''
+    def polygon_centroid(self,verts,area):
+        cx=0; cy=0
+        for i in range(len(verts)-1):
+            x_i = self.verts[i][0]; y_i = self.verts[i][1]
+            x_ip1 = self.verts[i+1][0]; y_ip1 = self.verts[i+1][1]
+            cx += (x_i+x_ip1) * (x_i*y_ip1 - x_ip1*y_i)
+            cy += (y_i+y_ip1) * (x_i*y_ip1 - x_ip1*y_i)
+
+        return np.array([cx/(6.0*area),cy/(6.0*area)])
 
     ''' find the polygon area based on ccw input vertices'''
     def polygon_area(self,verts):
@@ -238,12 +277,13 @@ class obj_polygon:
 
 #list of objects with collision relationship and distances
 class object_lists:
-    def __init__ (self,circle_list,polygon_list):
+    def __init__ (self,circle_list,polygon_list,template):
         # save circles and polygons
         self.circles = circle_list
         self.polygons = polygon_list
         self.num_circles = len(circle_list)
         self.num_polygons = len(polygon_list)
+        self.template = template
 
         #compute distance matrix of every object to other objects
         self.dist_mat = self.generate_distance_matrix()
@@ -279,12 +319,16 @@ class object_lists:
         collision_vec = [True] * num_obj
         for i in range(num_obj):
             for j in range(num_obj):
-                if all_objects[i].ifCollide(all_objects[j]):
+                #use the iith (diagonal entry to test border crossing detection)
+                if i==j and not all_objects[i].isIn_template(self.template): 
+                    #print 'cutting template boundary', all_objects[i].isIn_template(self.template), 'index=', i, '\n'
+                    collision_mat[i,i] = 1
+                elif  i!=j and all_objects[i].ifCollide(all_objects[j]):
                     collision_mat[i,j] = 1
 
         temp = np.sum(collision_mat,axis=0)
         for i in range(num_obj):
-            if temp[i] == 1:
+            if temp[i] == 0:
                 collision_vec[i] = False
               
         return collision_mat,collision_vec
@@ -395,7 +439,8 @@ if __name__ == '__main__':
     poly_list= [poly1,poly2,poly3]
 
     #formulate a list and do all pre-processing (finding distance + collision, etc)
-    item_lists = object_lists(circ_list,poly_list)
+    template = np.array([-10.0,10.0,-10.0,10.0])
+    item_lists = object_lists(circ_list,poly_list,template)
     item_lists.print_items_info()
     #print item_lists.poly_verts
 

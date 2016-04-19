@@ -201,7 +201,8 @@ if __name__ == '__main__':
     poly_list= [poly1,poly2,poly3]
 
     #formulate a list and do all pre-processing (finding distance + collision, etc)
-    item_lists = object_lists(circ_list,poly_list)
+    template = np.array([-10.0,10.0,-10.0,10.0])
+    item_lists = object_lists(circ_list,poly_list,template)
 
     #add to animator
     animator.add_circular_objects(item_lists.circ_diameter,\
@@ -219,7 +220,7 @@ if __name__ == '__main__':
     
     num_obj = item_lists.num_circles+ item_lists.num_polygons
     while True:
-        dx = 1* (np.random.random_sample((num_obj,2))- 0.5)
+        dx = 2* (np.random.random_sample((num_obj,2))- 0.5)
         #dx = np.array([[0.0,0.0],[0.0,0.0],[0.0,0.0],[0.0,0.0],[0.0,0.0],[0.0,0.0]])
         #print dx
         item_lists.update_delta_pos(dx)
