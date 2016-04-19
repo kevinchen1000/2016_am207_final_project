@@ -34,6 +34,10 @@ class Animator(object):
         #save axes to object
         self.ax = ax
 
+        #save animator canvas area
+        self.width = template_w
+        self.height = template_h
+
     #plot template
     def plot_template(self,l = 20.0, w = 20.0):
         x_pos = [-l/2, l/2, l/2, -l/2, -l/2 ]
