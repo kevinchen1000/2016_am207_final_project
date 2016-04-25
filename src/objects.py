@@ -28,6 +28,19 @@ def if_intersect(A,B,C,D):
     else:
         return False
 
+''' find intersection of two line segemets given by 4 points'''
+def find_intersect(A,B,C,D):
+    den = ((A[0]-B[0])*(C[1]-D[1])-(A[1]-B[1])*(C[0]-D[0]))
+
+    px = (A[0]*B[1] - B[0]*A[1]) * (C[0]-D[0]) - (A[0]-B[0]) * (C[0]*D[1]-D[0]*C[1])
+    px = px/ den
+
+    py = (A[0]*B[1] - B[0]*A[1]) * (C[1]-D[1]) - (A[1]-B[1]) * (C[0]*D[1]-D[0]*C[1])
+    py = py/ den
+
+    return np.array([px,py])
+    
+
 def seg_length(l):
     return (l[0] ** 2.0 + l[1] ** 2.0) **0.5
 
@@ -70,12 +83,80 @@ class obj_circle:
         self.radius = radius
         self.area = np.pi * radius **2
 
+    '''print information of the current object'''
+    def print_info(self):
+        print 'circle: ,', 'center = ', self.pos, ',radius =', self.radius
+
+    ''' return the height of the bounding box'''
+    def get_height(self):
+        return 2*self.radius
+
+    '''return the width of the bounding box'''
+    def get_width(self):
+        return 2*self.radius
+
+    '''to resolve collision with a circle '''
+    def untangle_collision_circle(self,circle,opt = 'self'):
+        #option parameter = self, other, or equal (which to shift)
+        assert(isinstance(circle,obj_circle))
+        assert(self.ifCollide_circle(circle))
+        
+        #resolve collision in direction of centroid
+        dir = (circle.pos - self.pos)/np.linalg.norm(circle.pos - self.pos)
+        dist = self.dist_to_circle(circle)
+
+        if opt == 'self':
+            self.pos = self.pos + np.abs(dist) *(-dir)
+        elif opt == 'other':
+            circle.pos = circle.pos + np.abs(dist) * (dir)
+        else:
+            self.pos = self.pos + np.abs(dist) *(-dir)/2
+            circle.pos = circle.pos + np.abs(dist) * (dir)/2
+
+    ''' to resolve collision with a polygon'''
+    def untangle_collision_polygon(self,polygon,opt = 'self'):
+        #option parameter = self, other, or equal (which to shift)
+        assert(isinstance(polygon,obj_polygon))
+        assert(self.ifCollide_polygon(polygon))
+        
+        #resolve collision in direction of centroid
+        dir = (polygon.centroid + polygon.offset - self.pos) / \
+              np.linalg.norm(polygon.centroid + polygon.offset- self.pos)
+
+        #update center dependingon whether circle center is inside the polygon
+        if polygon.isIn_poly(self.pos):
+            center = self.pos + self.radius * 10 * (-dir)
+        else:
+            center = self.pos
+
+        #find intersection point on polygon edge and the centroid, center line
+        for i in range(len(polygon.verts)-1):
+            v1 = np.array(polygon.verts[i]) + polygon.offset
+            v2 = np.array(polygon.verts[i+1]) +polygon.offset
+            if if_intersect(center,polygon.centroid+polygon.offset,v1,v2):
+                p_star = find_intersect(center,polygon.centroid+polygon.offset,v1,v2)
+                break
+        
+        new_pos = p_star + self.radius *(-dir)
+        dist = np.linalg.norm(new_pos-self.pos)
+
+        if opt == 'self':
+            self.pos = self.pos + np.abs(dist) *(-dir)
+        elif opt == 'other':
+            polygon.offset += np.abs(dist) * (dir)
+        else:
+            self.pos = self.pos + np.abs(dist) *(-dir)/2
+            polygon.offset += np.abs(dist) * (dir)/2
+        
+                                  
+
     ''' check is the polygon intersects or is out of the template'''
     def isIn_template(self,template):
         #template is given in a numpy array in form of [xmin,xmax,ymin,ymax]
         xmin = self.pos[0]-self.radius;  xmax = self.pos[0]+self.radius; 
         ymin = self.pos[1]-self.radius;  ymax = self.pos[1]+self.radius; 
-        return (xmin > template[0] and xmax < template[1] and ymin > template[2] and ymax < template[3])
+        eps=1e-8
+        return (xmin > template[0]-eps and xmax < template[1]+eps and ymin > template[2]-eps and ymax < template[3]+eps)
 
     ''' compute distance to a circle'''
     def dist_to_circle(self,circle):
@@ -140,6 +221,95 @@ class obj_polygon:
         self.centroid = self.polygon_centroid(self.verts,self.area)
         self.bounding_box = self.find_bounding_box(self.verts)
 
+    ''' return the height of the bounding box'''
+    def get_height(self):
+        return self.bounding_box[3] - self.bounding_box[2]
+
+    '''return the width of the bounding box'''
+    def get_width(self):
+        return self.bounding_box[1] - self.bounding_box[0]
+
+    '''untangle collision with a cirlce'''
+    def untangle_collision_circle(self,circle,opt ='self'):
+        assert(isinstance(circle,obj_circle))
+        if opt == 'self':
+            circle.untangle_collision_polygon(self,'other')
+        elif opt == 'other':
+            circle.untangle_collision_polygon(self,'self')
+        else:
+            circle.untangle_collison_polygon(self,'equal')
+
+
+    '''untangle collision with another polygon'''
+    def untangle_collision_polygon(self,polygon,opt = 'self'):
+        assert(isinstance(polygon,obj_polygon))
+        assert(self.ifCollide_polygon(polygon))
+        
+        #resolve collision in direction of centroid
+        dir = (polygon.centroid + polygon.offset - (self.centroid + self.offset))
+        dir = dir / np.linalg.norm(dir)
+
+        print 'polygon direction is:', dir
+
+        #update center dependingon whether circle center is inside the polygon
+        if polygon.isIn_poly(self.offset+self.centroid):
+            center1 = self.offset + self.centroid + 10 * (-dir)
+        else:
+            center1 = self.offset + self.centroid
+
+        #update center dependingon whether circle center is inside the polygon
+        if self.isIn_poly(polygon.offset):
+            center2 = polygon.offset + polygon.centroid + 10 * (dir)
+        else:
+            center2 = polygon.offset + polygon.centroid 
+
+        print 'centers are', center1,center2
+        #find intersection point on polygon edge and the centroid, center line
+        for i in range(len(polygon.verts)-1):
+            v11 = np.array(polygon.verts[i]) + polygon.offset
+            v12 = np.array(polygon.verts[i+1]) +polygon.offset
+            if if_intersect(center1,center2,v11,v12):
+                break
+
+        for i in range(len(self.verts)-1):
+            v21 = np.array(self.verts[i]) + self.offset
+            v22 = np.array(self.verts[i+1]) +self.offset
+            if if_intersect(center1,center2,v21,v22):
+                break
+
+        print 'valid intersecting indices are:', v11,v12,v21,v22
+        
+        dist11=0.0; dist12=0.0; dist21=0.0; dist22=0.0
+        if self.isIn_poly(v11):
+            print 'v11 inside'
+            dist11 = distPointToSegment(v21,v22,v11)
+        if self.isIn_poly(v12):
+            print 'v12 inside'
+            dist12 = distPointToSegment(v21,v22,v12)
+        if polygon.isIn_poly(v21):
+            print 'v21 inside'
+            dist21 = distPointToSegment(v11,v12,v21)
+        if polygon.isIn_poly(v22):
+            print 'v22 inside'
+            dist22 = distPointToSegment(v11,v12,v22)
+        
+        dist = np.max(np.array([dist11,dist12,dist21,dist22]))
+        print 'distance to shift =', dist
+        if opt == 'self':
+            self.offset +=  np.abs(dist) *(-dir)
+        elif opt == 'other':
+            polygon.offset += np.abs(dist) * (dir)
+        else:
+            self.offset += np.abs(dist) *(-dir)/2
+            polygon.offset += np.abs(dist) * (dir)/2
+
+        
+
+    '''print information of the current object'''
+    def print_info(self):
+        print 'polygon: ,', 'verts = ', self.verts,\
+              ',shifted centroid =', self.centroid+ self.offset, 'offset =', self.offset
+
     ''' check is the polygon intersects or is out of the template'''
     def isIn_template(self,template):
         #template is given in a numpy array in form of [xmin,xmax,ymin,ymax]
@@ -148,7 +318,8 @@ class obj_polygon:
 
         #print 'template is', template
         #print 'bounding box is', xmin,ymin,xmax,ymax
-        return (xmin > template[0] and xmax < template[1] and ymin > template[2] and ymax < template[3])
+        eps = 1e-8
+        return (xmin > template[0]-eps and xmax < template[1]+eps and ymin > template[2]-eps and ymax < template[3]+eps)
 
     ''' find the bounding box [xmin,xmax,ymin,ymax] of the polygon with first vertex at (0,0)'''
     def find_bounding_box(self,verts):
@@ -204,7 +375,7 @@ class obj_polygon:
         # assume the polygon is convex, then all edges must be in the same orientation
         # wrt pt
         #shift pt by offset of the polygon
-        pt = pt + self.offset
+        pt = pt - self.offset
 
         #print 'transformed pt is' ,pt
         numEdges = len(self.verts)-1
@@ -299,6 +470,8 @@ class object_lists:
         self.poly_verts, self.poly_collision = self.generate_poly_info()
 
         print self.collision_mat
+
+
 
 
 
@@ -454,7 +627,33 @@ if __name__ == '__main__':
     #debug function
     #print if_intersect([0,0],[2,0],[1,1],[1,-1])
     #print if_intersect([0,0],[2,0],[3,1],[3,-1])
-    print 'debugging function...'
+    print 'debugging collision resolving function...'
+    c3 = copy.deepcopy(circ1)
+    c4 = copy.deepcopy(circ2)
+    poly3 = copy.deepcopy(poly1)
+    c3.print_info()
+    c4.print_info()
+    poly3.print_info()
+
+    print 'testing untangle circle collision..................'
+    c3.untangle_collision_circle(c4,opt='self')
+    c3.print_info()
+    c4.print_info()
+
+    print 'testing untangle circle polygon collision.............'
+    c4.untangle_collision_polygon(poly3)
+    c4.print_info()
+    poly3.print_info()
+
+    print 'testing untangle polygon collision....................'
+    poly_p1 = obj_polygon([(0,0),(3,0),(3,2),(0,2),(0,0.0)],np.array([0.0,0.0]))
+    poly_p2 = obj_polygon([(0,-0.1),(3,-0.1),(3,2.1),(0,2.1),(0,-0.1)],np.array([2.0,0.0]))
+    poly_p1.print_info()
+    poly_p2.print_info()
+    print poly_p2.isIn_poly([3,0])
+    poly_p1.untangle_collision_polygon(poly_p2)
+    poly_p1.print_info()
+
     
     
     
