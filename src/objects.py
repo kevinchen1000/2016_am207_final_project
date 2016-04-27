@@ -163,6 +163,13 @@ class obj_circle:
         assert(isinstance(circle,obj_circle))
         return distance(self.pos,circle.pos) - (self.radius + circle.radius) 
 
+    ''' compute distance to center of an object'''
+    def centroid_dist(self,obj):
+        if isinstance(obj,obj_circle):
+            return np.linalg.norm(self.pos - obj.pos)
+        else:
+            return np.linalg.norm(self.pos - (obj.centroid + obj.offset))
+
     '''return distance to either a circle or a polygon'''
     def calc_dist(self,item):
         if isinstance(item,obj_circle):
@@ -228,6 +235,13 @@ class obj_polygon:
     '''return the width of the bounding box'''
     def get_width(self):
         return self.bounding_box[1] - self.bounding_box[0]
+
+    ''' compute distance to center of an object'''
+    def centroid_dist(self,obj):
+        if isinstance(obj,obj_circle):
+            return np.linalg.norm(self.centroid + self.offset - obj.pos)
+        else:
+            return np.linalg.norm(self.centroid + self.offset - (obj.centroid + obj.offset))
 
     '''untangle collision with a cirlce'''
     def untangle_collision_circle(self,circle,opt ='self'):
@@ -610,6 +624,12 @@ if __name__ == '__main__':
     #form arrays of objects
     circ_list= [circ1,circ2,circ3]
     poly_list= [poly1,poly2,poly3]
+
+    print 'debugging centroid distance.........'
+    print 'distance from circle 1 to circle 2 is: ', circ1.centroid_dist(circ2)
+    print 'distance from circle 1 to poly 1 is: ', circ1.centroid_dist(poly1)
+    print 'distance from poly 1 to circle 1 is: ', poly1.centroid_dist(circ1)
+    print 'distance from poly 1 to poly 2 is: ', poly1.centroid_dist(poly2)
 
     #formulate a list and do all pre-processing (finding distance + collision, etc)
     template = np.array([-10.0,10.0,-10.0,10.0])
