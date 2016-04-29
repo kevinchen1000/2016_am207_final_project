@@ -83,6 +83,14 @@ class obj_circle:
         self.radius = radius
         self.area = np.pi * radius **2
 
+    ''' set circle centre '''
+    def set_pos(self, new_pos):
+        self.pos = new_pos
+
+    '''increment the position of circle position'''
+    def increment_pos(self,disp):
+        self.pos += disp
+
     '''print information of the current object'''
     def print_info(self):
         print 'circle: ,', 'center = ', self.pos, ',radius =', self.radius
@@ -94,6 +102,19 @@ class obj_circle:
     '''return the width of the bounding box'''
     def get_width(self):
         return 2*self.radius
+
+    ''' return the position of the circle radius'''
+    def get_position(self):
+        return self.pos
+
+    '''untangle collision with an object '''
+    def untangle_collision(self,obj,opt='self'):
+        if isinstance(obj,obj_circle):
+            untangle_collision_circle(self,obj,opt)
+        elif isinstance(ob,obj_polygon):
+            untangle_collision_polygon(self,obj,opt)
+        else:
+            assert(0)
 
     '''to resolve collision with a circle '''
     def untangle_collision_circle(self,circle,opt = 'self'):
@@ -170,6 +191,13 @@ class obj_circle:
         else:
             return np.linalg.norm(self.pos - (obj.centroid + obj.offset))
 
+    '''compute displacement direction to an object'''
+    def centroid_dir(self,obj):
+        if isinstance(obj,obj_circle):
+            return (self.pos -obj.pos)/np.linalg.norm(self.pos - obj.pos)
+        else:
+            return (obj.centroid+obj.offset - self.pos)/np.linalg.norm(self.pos - (obj.centroid + obj.offset))
+
     '''return distance to either a circle or a polygon'''
     def calc_dist(self,item):
         if isinstance(item,obj_circle):
@@ -228,6 +256,14 @@ class obj_polygon:
         self.centroid = self.polygon_centroid(self.verts,self.area)
         self.bounding_box = self.find_bounding_box(self.verts)
 
+    '''set polygon offset'''
+    def set_pos(self,new_offset):
+        self.offset = new_offset
+    
+    '''increment the position of polygon offset'''
+    def increment_pos(self,disp):
+        self.offset += disp
+
     ''' return the height of the bounding box'''
     def get_height(self):
         return self.bounding_box[3] - self.bounding_box[2]
@@ -236,12 +272,35 @@ class obj_polygon:
     def get_width(self):
         return self.bounding_box[1] - self.bounding_box[0]
 
+    '''return the current position of the polygon'''
+    def get_position(self):
+        return self.centroid + self.offset
+
     ''' compute distance to center of an object'''
     def centroid_dist(self,obj):
         if isinstance(obj,obj_circle):
             return np.linalg.norm(self.centroid + self.offset - obj.pos)
         else:
             return np.linalg.norm(self.centroid + self.offset - (obj.centroid + obj.offset))
+
+    '''compute displacement direction to an object'''
+    def centroid_dir(self,obj):
+        if isinstance(obj,obj_circle):
+            return (self.centroid + self.offset - obj.pos)/ \
+                   np.linalg.norm(self.centroid + self.offset - obj.pos)
+        else:
+            return (self.centroid + self.offset - (obj.centroid + obj.offset))/ \
+                   np.linalg.norm(self.centroid + self.offset - (obj.centroid + obj.offset))
+
+    '''untangle collision with an object '''
+    def untangle_collision(self,obj,opt='self'):
+        if isinstance(obj,obj_circle):
+            untangle_collision_circle(self,obj,opt)
+        elif isinstance(ob,obj_polygon):
+            untangle_collision_polygon(self,obj,opt)
+        else:
+            assert(0)
+    
 
     '''untangle collision with a cirlce'''
     def untangle_collision_circle(self,circle,opt ='self'):
