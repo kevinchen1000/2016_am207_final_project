@@ -9,7 +9,7 @@ import random
 #circ_list : array of circle objects
 #poly_list : array of polygon objects
 #template : numpy array of [xmin,xmax,ymin,ymax]
-def SDG_tiling(circ_list,poly_list,template):
+def SDG_tiling(circ_list,poly_list,template,animator = None,item_lists =None):
     obj_list = circ_list + poly_list
     num_objects = len(circ_list)+len(poly_list)
 
@@ -28,12 +28,30 @@ def SDG_tiling(circ_list,poly_list,template):
     centroid_pos = np.zeros((num_objects,2) ,dtype = 'float')
     initialize_tiling_positions(obj_list,xmin,xmax,ymin,ymax)
 
+    #initialize to screen
+    if animator is not None:
+        init_pos =  obtain_centroid_pos(obj_list)
+        item_lists.update_delta_pos(init_pos)
+
     #optimization step
     while iterate < num_iter and not converge:
 
         #sequential movement of each object
         for i in range(len(obj_list)):
-            SDG_update(obj_list,i,xmin,xmax,ymin,ymax)
+            #plot update for debugging
+            delta_x = SDG_update(obj_list,i,xmin,xmax,ymin,ymax)
+            if animator is not None:
+                delta_vec = np.zeros((num_objects,2),dtype = 'float')
+                delta_vec[i,:] = delta_x
+                item_lists.update_delta_pos(delta_vec)
+                animator.update_circular_objects(item_lists.circ_position,item_lists.circ_collision)
+                animator.update_polygon_objects(item_lists.poly_verts,item_lists.poly_collision)
+
+               
+                #animator.remove_circles()
+                #animator.remove_polygons()
+                
+                
 
         #update counter
         iterate +=1
@@ -82,7 +100,7 @@ def restrict_disp(disp,obj_list,ind):
 
         #update object position
         temp_obj.increment_pos(disp_mag*disp_dir)
-
+        collision_free = True
         for i in range(len(obj_list)):
             if i != ind and temp_obj.ifCollide(obj_list[i]):
                 break
@@ -108,8 +126,8 @@ def SDG_update(obj_list,ind,xmin,xmax,ymin,ymax):
     neighbor_indices = random.sample(select_array,num_to_select)
 
     #define constants
-    K = 0.1
-    G = 0.1
+    K = 0.1*5
+    G = 0.1*5
     origin = np.array([xmin,ymin])
 
     #compute displacement due to global potenial
@@ -130,7 +148,7 @@ def SDG_update(obj_list,ind,xmin,xmax,ymin,ymax):
     #update position of object
     obj_list[ind].increment_pos(disp)
     
-    return obj_list
+    return disp
 
 '''initialize the tiling positions of objects that are collision free but may intersect template
    borders
@@ -211,23 +229,32 @@ if __name__ == '__main__':
     circ_list_short = [circ1]
     poly_list_short = [poly1]
     #use stochastic methods to tile all items and return the convergene flag
-    incl_circ, incl_poly, converge =  SDG_tiling(circ_list_short,poly_list_short,template)
-    print 'method has converged = ', converge
+    #incl_circ, incl_poly, converge =  SDG_tiling(circ_list_short,poly_list_short,template)
+    #print 'method has converged = ', converge
 
     #plot solution
-    item_lists = object_lists(incl_circ,incl_poly,template)
+    #item_lists = object_lists(incl_circ,incl_poly,template)
+    #animator = Animator(20,20)
+    #animator.add_circular_objects(item_lists.circ_diameter,\
+    #                              item_lists.circ_position,\
+    #                              item_lists.circ_collision,0.1)
+
+    #for i in range(len(item_lists.poly_collision)):
+    #    item_lists.poly_collision[i] = False
+    #animator.add_polygon_objects(item_lists.poly_verts,\
+    #                              item_lists.poly_collision,100)
+
+
+    #use plotting version
     animator = Animator(20,20)
+    item_lists = object_lists(circ_list_short,poly_list_short,template)
     animator.add_circular_objects(item_lists.circ_diameter,\
                                   item_lists.circ_position,\
                                   item_lists.circ_collision,0.1)
 
-    #for i in range(len(item_lists.poly_collision)):
-    #    item_lists.poly_collision[i] = False
+                
     animator.add_polygon_objects(item_lists.poly_verts,\
-                                  item_lists.poly_collision,100)
+                                 item_lists.poly_collision,0.5)
 
-
-    #use plotting version
-    #animator = Animator(20,20)
-    #incl_list, converge = SDG_tiling_plot(circ_list,poly_list,template,animator)
+    circ_list, poly_list, converge = SDG_tiling(circ_list_short,poly_list_short,template,animator,item_lists)
 
