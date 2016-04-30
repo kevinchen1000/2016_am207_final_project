@@ -198,7 +198,7 @@ if __name__ == '__main__':
     template = np.array([-10.0,10.0,-10.0,10.0])
 
     #use stochastic methods to tile all items and return the convergene flag
-    incl_circ, incl_poly, converge =  SDG_tiling(circ_list,poly_list,template)
+    incl_circ, incl_poly, converge = SDG_tiling(circ_list,poly_list,template)
     print 'method has converged = ', converge
 
     #plot solution
