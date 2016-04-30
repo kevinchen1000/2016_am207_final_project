@@ -110,9 +110,9 @@ class obj_circle:
     '''untangle collision with an object '''
     def untangle_collision(self,obj,opt='self'):
         if isinstance(obj,obj_circle):
-            untangle_collision_circle(self,obj,opt)
+            self.untangle_collision_circle(obj,opt)
         elif isinstance(ob,obj_polygon):
-            untangle_collision_polygon(self,obj,opt)
+            self.untangle_collision_polygon(obj,opt)
         else:
             assert(0)
 
@@ -295,9 +295,9 @@ class obj_polygon:
     '''untangle collision with an object '''
     def untangle_collision(self,obj,opt='self'):
         if isinstance(obj,obj_circle):
-            untangle_collision_circle(self,obj,opt)
-        elif isinstance(ob,obj_polygon):
-            untangle_collision_polygon(self,obj,opt)
+            self.untangle_collision_circle(obj,opt)
+        elif isinstance(obj,obj_polygon):
+            self.untangle_collision_polygon(obj,opt)
         else:
             assert(0)
     

@@ -20,16 +20,16 @@ def SDG_tiling(circ_list,poly_list,template):
     #-->enforce no collision but may cross boundary of template (infeasible)
 
     num_iter =100
-    iter = 0
-    tol = 1
+    iterate = 0
+    tol = 1e-2
     converge = False
     
     #initialize centroid positions
-    #centroid_pos = np.zeros((num_objects,2) ,dtype = 'float')
+    centroid_pos = np.zeros((num_objects,2) ,dtype = 'float')
     initialize_tiling_positions(obj_list,xmin,xmax,ymin,ymax)
 
     #optimization step
-    while iter < num_iter and not converge:
+    while iterate < num_iter and not converge:
 
         #sequential movement of each object
         for i in range(len(obj_list)):
@@ -42,12 +42,15 @@ def SDG_tiling(circ_list,poly_list,template):
         update_centroid_pos = obtain_centroid_pos(obj_list)
         converge = np.sum(np.sum((centroid_pos - update_centroid_pos)**2)) /(num_objects+0.0) <tol
         centroid_pos = update_centroid_pos
-
+        
+    print 'error =',  np.sum(np.sum((centroid_pos - update_centroid_pos)**2)) /(num_objects+0.0)
+    print 'return solution after ', iterate, 'iterations'
     #return the updated object list and convergence flag
-    return obj_list, converge
+    return circ_list, poly_list, converge
 
 ''' function that copies all centroid positions of the object into a numpy array through DEEPCOPY'''
 def obtain_centroid_pos(obj_list):
+    num_objects = len(obj_list)
     centroid_pos =  np.zeros((num_objects,2) ,dtype = 'float')
     for i in range(len(obj_list)):
         if isinstance(obj_list[i],obj_circle):
@@ -92,7 +95,9 @@ def SDG_update(obj_list,ind,xmin,xmax,ymin,ymax):
 
     #randomly select a subset of items
     num_to_select = len(obj_list)-1
-    select_array = np.concatenate([np.range(0,ind),np.range(ind+1,num_to_select)])
+    select_array = np.concatenate([np.array(range(0,ind)),np.array(range(ind+1,len(obj_list)))])
+    #print 'select array is: ', select_array
+    #print 'num_to_select is: ', num_to_select
     neighbor_indices = random.sample(select_array,num_to_select)
 
     #define constants
@@ -105,6 +110,7 @@ def SDG_update(obj_list,ind,xmin,xmax,ymin,ymax):
 
     #compute influence due to other selected objects
     for neighbor_ind in neighbor_indices:
+        neighbor_ind = int(neighbor_ind)
         local_dir = obj.centroid_dir(obj_list[neighbor_ind])
         disp += G * obj_list[neighbor_ind].area / obj.centroid_dist(obj_list[neighbor_ind]) * local_dir
 
@@ -125,7 +131,8 @@ def initialize_tiling_positions(obj_list,xmin,xmax,ymin,ymax):
 
     #initialize the positions sequentially
     for i in range(len(obj_list)):
-        init_x,init_y = np.random.multivariate_normal(mean,cov,1)
+        init = np.random.multivariate_normal(mean,cov,1)
+        init_x = init[0][0]; init_y = init[0][1]
         obj_list[i].set_pos(np.abs(np.array([init_x,init_y]-np.array([xmin,ymin]))))
 
         #detect and 
@@ -191,9 +198,23 @@ if __name__ == '__main__':
     template = np.array([-10.0,10.0,-10.0,10.0])
 
     #use stochastic methods to tile all items and return the convergene flag
-    incl_list, converge =  SDG_tiling(circ_list,poly_list,template)
+    incl_circ, incl_poly, converge =  SDG_tiling(circ_list,poly_list,template)
+    print 'method has converged = ', converge
+
+    #plot solution
+    item_lists = object_lists(incl_circ,incl_poly,template)
+    animator = Animator(20,20)
+    animator.add_circular_objects(item_lists.circ_diameter,\
+                                  item_lists.circ_position,\
+                                  item_lists.circ_collision,0.1)
+
+    #for i in range(len(item_lists.poly_collision)):
+    #    item_lists.poly_collision[i] = False
+    animator.add_polygon_objects(item_lists.poly_verts,\
+                                  item_lists.poly_collision,100)
+
 
     #use plotting version
-    animator = Animator(20,20)
-    incl_list, converge = SDG_tiling_plot(circ_list,poly_list,template,animator)
+    #animator = Animator(20,20)
+    #incl_list, converge = SDG_tiling_plot(circ_list,poly_list,template,animator)
 
