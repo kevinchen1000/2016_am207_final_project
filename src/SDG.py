@@ -36,13 +36,20 @@ def SDG_tiling(circ_list,poly_list,template):
             SDG_update(obj_list,i,xmin,xmax,ymin,ymax)
 
         #update counter
-        num_iter +=1
+        iterate +=1
 
         #comparsion for convergence
         update_centroid_pos = obtain_centroid_pos(obj_list)
+
+        print 'update_centroid_pos= ',update_centroid_pos
         converge = np.sum(np.sum((centroid_pos - update_centroid_pos)**2)) /(num_objects+0.0) <tol
-        centroid_pos = update_centroid_pos
-        
+
+        print 'local converge =', np.sum(np.sum((centroid_pos - update_centroid_pos)**2)) /(num_objects+0.0)
+        centroid_pos = copy.deepcopy(update_centroid_pos)
+
+
+    print centroid_pos
+    print update_centroid_pos
     print 'error =',  np.sum(np.sum((centroid_pos - update_centroid_pos)**2)) /(num_objects+0.0)
     print 'return solution after ', iterate, 'iterations'
     #return the updated object list and convergence flag
@@ -101,21 +108,24 @@ def SDG_update(obj_list,ind,xmin,xmax,ymin,ymax):
     neighbor_indices = random.sample(select_array,num_to_select)
 
     #define constants
-    K = 1
-    G = 1
+    K = 0.1
+    G = 0.1
     origin = np.array([xmin,ymin])
 
     #compute displacement due to global potenial
     disp = -K * (obj.get_position() - origin)
-
+   
     #compute influence due to other selected objects
     for neighbor_ind in neighbor_indices:
         neighbor_ind = int(neighbor_ind)
         local_dir = obj.centroid_dir(obj_list[neighbor_ind])
         disp += G * obj_list[neighbor_ind].area / obj.centroid_dist(obj_list[neighbor_ind]) * local_dir
 
+    print 'initial disp =', disp
     #restrict the magnitude of disp to avoid collision
     disp = restrict_disp(disp,obj_list,ind)
+
+    print 'object [',ind, '] increments by', disp
 
     #update position of object
     obj_list[ind].increment_pos(disp)
@@ -197,8 +207,11 @@ if __name__ == '__main__':
     #formulate a list and do all pre-processing (finding distance + collision, etc)
     template = np.array([-10.0,10.0,-10.0,10.0])
 
+    #debug
+    circ_list_short = [circ1]
+    poly_list_short = [poly1]
     #use stochastic methods to tile all items and return the convergene flag
-    incl_circ, incl_poly, converge =  SDG_tiling(circ_list,poly_list,template)
+    incl_circ, incl_poly, converge =  SDG_tiling(circ_list_short,poly_list_short,template)
     print 'method has converged = ', converge
 
     #plot solution
