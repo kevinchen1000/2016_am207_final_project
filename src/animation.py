@@ -58,7 +58,7 @@ class Animator(object):
 
 
     #add circular objects
-    def add_circular_objects(self,diameters,positions,collision):
+    def add_circular_objects(self,diameters,positions,collision,pause_time=0.1):
         
         circ_colors = self.generate_color_array(collision)
         self.circles = EllipseCollection(widths=diameters,
@@ -80,14 +80,14 @@ class Animator(object):
 
         #draw to screen
         plt.draw()
-        plt.pause(0.1)
+        plt.pause(pause_time)
 
         #remove text labels
         #for i in range(len(collision)):
         #    text_labels[i].remove()
 
     #add polygon objects
-    def add_polygon_objects(self,verts,collision):
+    def add_polygon_objects(self,verts,collision,pause_time=0.1):
 
         poly_colors = self.generate_color_array(collision)
         self.polygons = PolyCollection(verts, facecolors=poly_colors)
@@ -95,7 +95,9 @@ class Animator(object):
         self.ax.add_collection(self.polygons)
 
         #add text label
-        num_circles = self.circles.get_offsets().shape[1]
+        num_circles = self.circles.get_offsets().shape[0]+1
+        #print 'number of circles =', num_circles
+      
         text_labels = [None] * len(collision)
         for i in range(len(collision)):
             temp = np.array(verts[i])
@@ -107,7 +109,7 @@ class Animator(object):
 
 
         plt.draw()
-        plt.pause(0.1)
+        plt.pause(pause_time)
 
         #remove text labels
         #for i in range(len(collision)):
@@ -127,7 +129,7 @@ class Animator(object):
             label.remove()
 
     #update circular objects
-    def update_circular_objects(self,positions,collision):
+    def update_circular_objects(self,positions,collision,pause_time = 0.1):
         
         #set circle colors
         circ_colors = self.generate_color_array(collision)
@@ -148,11 +150,11 @@ class Animator(object):
 
 
         plt.draw()
-        plt.pause(0.1)
+        plt.pause(pause_time)
 
 
     #update polygon objects
-    def update_polygon_objects(self,positions,collision):
+    def update_polygon_objects(self,positions,collision,pause_time=0.1):
 
         #set polygon colors
         poly_colors = self.generate_color_array(collision)
@@ -167,7 +169,7 @@ class Animator(object):
             label.remove()
 
         #add new labels
-        num_circles = self.circles.get_offsets().shape[1]
+        num_circles = self.circles.get_offsets().shape[0]+1
         #print self.polygons.get_offsets()
 
         #assert(0)
@@ -181,7 +183,7 @@ class Animator(object):
         self.polygon_labels = text_labels
 
         plt.draw()
-        plt.pause(0.1)
+        plt.pause(pause_time)
 
 
 #testing 
@@ -205,7 +207,8 @@ if __name__ == '__main__':
     poly_list= [poly1,poly2,poly3]
 
     #formulate a list and do all pre-processing (finding distance + collision, etc)
-    item_lists = object_lists(circ_list,poly_list)
+    template = np.array([-10.0,10.0,-10.0,10.0])
+    item_lists = object_lists(circ_list,poly_list,template)
 
     #add to animator
     animator.add_circular_objects(item_lists.circ_diameter,\
@@ -216,14 +219,14 @@ if __name__ == '__main__':
                                   item_lists.poly_collision)
 
 
-    #pause(100)
+    #time.sleep(100)
     #number of optimization iterations
     num_items_renew = 100
     num_position_update = 1000
     
     num_obj = item_lists.num_circles+ item_lists.num_polygons
     while True:
-        dx = 1* (np.random.random_sample((num_obj,2))- 0.5)
+        dx = 2* (np.random.random_sample((num_obj,2))- 0.5)
         #dx = np.array([[0.0,0.0],[0.0,0.0],[0.0,0.0],[0.0,0.0],[0.0,0.0],[0.0,0.0]])
         #print dx
         item_lists.update_delta_pos(dx)
