@@ -20,7 +20,9 @@ class Animator(object):
         fig = plt.figure(figsize = (10,10))
         ax = fig.gca()
 
-        ax.axis([-template_w/2.0, template_w/2.0,-template_h/2.0,template_h/2.0]) 
+        #set axis dimension 
+        ax.axis( [-2*template_w/2.0, 2*template_w/2.0,-2*template_h/2.0,2*template_h/2.0]) 
+        #ax.axis([-template_w/2.0, template_w/2.0,-template_h/2.0,template_h/2.0]) 
         ax.get_xaxis().set_visible(True)
         ax.get_yaxis().set_visible(True)
 

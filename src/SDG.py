@@ -46,6 +46,9 @@ def SDG_tiling(circ_list,poly_list,template,animator = None,item_lists =None):
                 item_lists.update_delta_pos(delta_vec)
                 animator.update_circular_objects(item_lists.circ_position,item_lists.circ_collision)
                 animator.update_polygon_objects(item_lists.poly_verts,item_lists.poly_collision)
+                #for debug
+                print 'current center positions =' ,  obtain_centroid_pos(obj_list)
+                variable = raw_input('input something!: ')
 
                
                 #animator.remove_circles()
@@ -81,7 +84,7 @@ def obtain_centroid_pos(obj_list):
         if isinstance(obj_list[i],obj_circle):
             centroid_pos[i,:] = copy.deepcopy(obj_list[i].pos)
         else: 
-            centroid_pos[i,:] = copy.deepcopy(obj_list[i].centroid)
+            centroid_pos[i,:] = copy.deepcopy(obj_list[i].centroid + obj_list[i].offset)
     return centroid_pos
 
 ''' function that restricts displacement amplitude to avoid collision'''
@@ -89,27 +92,47 @@ def restrict_disp(disp,obj_list,ind):
     disp_mag =  np.linalg.norm(disp)
     disp_dir = disp / disp_mag
 
-    num_iter = 20
-    iter = 0
-    collision_free = False
-
     temp_obj = copy.deepcopy(obj_list[ind])
     
+    #detect if there is collision if incremented by full disp
+    temp_obj.increment_pos(disp)
+
+    if if_collision_free(obj_list,ind,temp_obj):
+        print 'ok to move entire distance, no collision'
+        return disp
+
+    #otherwise, need to find the closest point
+    print 'not collision free if moved by total distance '
+    num_iter = 20
+    iterate = 1
+    collision_free = False
+    temp_obj.increment_pos(-disp)
+    total_disp_mag =0
+
     #continuously half the displacement magnitude until no collision
-    while not collision_free and iter<num_iter:
+    while iterate < num_iter:
 
         #update object position
-        temp_obj.increment_pos(disp_mag*disp_dir)
-        collision_free = True
-        for i in range(len(obj_list)):
-            if i != ind and temp_obj.ifCollide(obj_list[i]):
-                break
+        delta_mag = (0.5**iterate)*disp_mag
+        temp_obj.increment_pos(delta_mag*disp_dir)
 
-        temp_obj.increment_pos(-disp_mag*disp_dir)
-        disp_mag = disp_mag /2
-        iter +=1
+        if if_collision_free(obj_list,ind,temp_obj):
+            total_disp_mag += delta_mag
+        else:
+            temp_obj.increment_pos(-delta_mag*disp_dir)
+    
+        iterate +=1
 
-    return disp_mag* disp_dir
+    return total_disp_mag * disp_dir
+
+'''detect if the ind th object is collision free with the rest of obstacles'''
+def if_collision_free(obj_list,ind,temp_obj):
+    collision_free = True
+    for i in range(len(obj_list)):
+        if i != ind and temp_obj.ifCollide(obj_list[i]):
+            collision_free = False
+            return collision_free
+    return collision_free
 
 '''function that updates the center (or centroid) position of an object based on stochastic gradient descent'''
 #ind indicates the ind_th object in the list (under the potential influence of other)
@@ -126,8 +149,8 @@ def SDG_update(obj_list,ind,xmin,xmax,ymin,ymax):
     neighbor_indices = random.sample(select_array,num_to_select)
 
     #define constants
-    K = 0.1*5
-    G = 0.1*5
+    K = 0.1
+    G = 0.1*0.1
     origin = np.array([xmin,ymin])
 
     #compute displacement due to global potenial
@@ -146,7 +169,7 @@ def SDG_update(obj_list,ind,xmin,xmax,ymin,ymax):
     print 'object [',ind, '] increments by', disp
 
     #update position of object
-    obj_list[ind].increment_pos(disp)
+    #obj_list[ind].increment_pos(disp)
     
     return disp
 
@@ -155,14 +178,22 @@ def SDG_update(obj_list,ind,xmin,xmax,ymin,ymax):
 '''
 def initialize_tiling_positions(obj_list,xmin,xmax,ymin,ymax):
     mean = np.array([0.0,0.0])
-    cov = np.array([[(xmax-xmin)**2,0.0],[0.0,(ymax-ymin)**2]])
+    scale = 0.1
+    cov = np.array([[(xmax-xmin)**2*scale,0.0],[0.0,scale*(ymax-ymin)**2]])
 
     #initialize the positions sequentially
     for i in range(len(obj_list)):
         init = np.random.multivariate_normal(mean,cov,1)
-        init_x = init[0][0]; init_y = init[0][1]
-        obj_list[i].set_pos(np.abs(np.array([init_x,init_y]-np.array([xmin,ymin]))))
+        #debug
+        if i==0:
+            init= np.array([[0.0,0.0]])+10
+        elif i == 1:
+            init= np.array([[1.0,-1.0]])+10
 
+        init_x = init[0][0]; init_y = init[0][1]
+        obj_list[i].set_pos(np.abs(np.array([init_x,init_y])) +np.array([xmin,ymin]))
+
+        print 'initial positon for ', i, 'th object is at', np.abs(np.array([init_x,init_y])) +np.array([xmin,ymin])
         #detect and 
         for j in range(i):
             if obj_list[i].ifCollide(obj_list[j]):
