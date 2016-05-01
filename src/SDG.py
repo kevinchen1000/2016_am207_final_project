@@ -275,8 +275,13 @@ if __name__ == '__main__':
     circ_list_short = [circ1]
     poly_list_short = [poly1]
     #use stochastic methods to tile all items and return the convergene flag
+
+    incl_circ, incl_poly, converge = SDG_tiling(circ_list,poly_list,template)
+    print 'method has converged = ', converge
+
     #incl_circ, incl_poly, converge =  SDG_tiling(circ_list_short,poly_list_short,template)
     #print 'method has converged = ', converge
+
 
     #plot solution
     #item_lists = object_lists(incl_circ,incl_poly,template)

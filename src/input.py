@@ -58,7 +58,7 @@ def input_generator(template):
 				# offset_y = np.random.uniform(low=(-animator.width+top_point)*1./2., high=(animator.width-top_point)*1./2.)
 
 				triangle = obj_polygon(vertex, np.array([0.0,0.0]))
-                                #triangle.offset = triangle
+
 				polygon_list.append(triangle)
 
 				input_area += triangle.area
@@ -167,6 +167,7 @@ def input_generator(template):
 
 
 
+
 if __name__ == '__main__': 
     template = np.array([-10.0,10.0,-10.0,10.0])
     print input_generator(template)
@@ -183,3 +184,4 @@ if __name__ == '__main__':
 
     animator.add_polygon_objects(item_lists.poly_verts,\
                                   item_lists.poly_collision,100)
+
