@@ -77,7 +77,7 @@ class Animator(object):
         #add text label
         text_labels = [None] * len(collision)
         for i in range(len(collision)):
-            text_labels[i]= plt.text(positions[i,0],positions[i,1],str(i),color = 'w')
+            text_labels[i]= plt.text(positions[i,0],positions[i,1],str(i),color = 'k')
         self.circle_labels = text_labels
 
         #draw to screen
@@ -105,7 +105,8 @@ class Animator(object):
             temp = np.array(verts[i])
             x = np.mean(temp[:,0])
             y = np.mean(temp[:,1])
-            text_labels[i]= plt.text(x,y,str(i+num_circles),color = 'w')
+        
+            text_labels[i]= plt.text(x,y,str(i+num_circles),color = 'k')
 
         self.polygon_labels = text_labels
 
@@ -147,7 +148,7 @@ class Animator(object):
         #add labels
         text_labels = [None] * len(collision)
         for i in range(len(collision)):
-            text_labels[i]= plt.text(positions[i,0],positions[i,1],str(i),color = 'w')
+            text_labels[i]= plt.text(positions[i,0],positions[i,1],str(i),color = 'k')
         self.circle_labels = text_labels
 
 
@@ -180,7 +181,7 @@ class Animator(object):
             temp = np.array(positions[i])
             x = np.mean(temp[:,0])
             y = np.mean(temp[:,1])
-            text_labels[i]= plt.text(x,y,str(i+num_circles),color = 'w')
+            text_labels[i]= plt.text(x,y,str(i+num_circles),color = 'k')
 
         self.polygon_labels = text_labels
 

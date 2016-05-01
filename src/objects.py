@@ -107,6 +107,15 @@ class obj_circle:
     def get_position(self):
         return self.pos
 
+    ''' find extreme points of the circle bounding box'''
+    def find_extreme_pt(self):
+        l = -self.radius + self.pos[0]
+        r = self.radius + self.pos[0]
+        d = -self.radius + self.pos[1]
+        u = self.radius + self.pos[1]
+ 
+        return l,r,d,u
+
     ''' untangle collision with bounding box'''
     def untangle_template(self,template):
         #put polygon inside the template
@@ -437,6 +446,15 @@ class obj_polygon:
         #print np.array([min_vec[0],max_vec[0],min_vec[1],max_vec[1]])
         return np.array([min_vec[0],max_vec[0],min_vec[1],max_vec[1]])
 
+    ''' find extreme points of the polygon bounding box'''
+    def find_extreme_pt(self):
+        l = self.bounding_box[0] + self.offset[0]
+        r = self.bounding_box[1] + self.offset[0]
+        d = self.bounding_box[2] + self.offset[1]
+        u = self.bounding_box[3] + self.offset[1]
+
+        return l,r,d,u
+
     ''' find the polygon centroid on ccw input vertices'''
     def polygon_centroid(self,verts,area):
         cx=0; cy=0
@@ -502,7 +520,7 @@ class obj_polygon:
         assert(isinstance(polygon,obj_polygon))
 
         #check if vertices of polygon is in the current object
-        '''  
+         
         for i in range(len(polygon.verts)):
             if self.isIn_poly(np.array(polygon.verts[i])):
                 return True
@@ -511,7 +529,7 @@ class obj_polygon:
         for i in range(len(self.verts)):
             if polygon.isIn_poly(np.array(self.verts[i])):
                 return True
-        '''
+        
         for i in range(len(polygon.verts)-1):
             for j in range(len(self.verts)-1):
                 A1 =np.array(polygon.verts[i])+polygon.offset
@@ -675,6 +693,22 @@ class object_lists:
 
         #for plotting polygons
         self.poly_verts, self.poly_collision = self.generate_poly_info()
+
+
+    '''check if current tiling is feasible'''
+    def num_infeasible(self):
+        infeasible_count = 0
+        for i in range(len(self.collision_vec)):
+            if self.collision_vec[i] == True:
+                infeasible_count +=1
+
+        if infeasible_count ==0:
+            collision_free = True
+        else:
+            collision_free = False
+
+        return collision_free, infeasible_count
+ 
 
 
 

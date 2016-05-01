@@ -33,29 +33,38 @@ def SDG_tiling(circ_list,poly_list,template,animator = None,item_lists =None):
         init_pos =  obtain_centroid_pos(obj_list)
         #item_lists.update_delta_pos(init_pos)
 
+    #update_order = np.arange(0,len(obj_list),dtype = 'int')
+    update_order=compute_update_order(obj_list)
+
     #optimization step
     while iterate < num_iter and not converge:
 
         #sequential movement of each object
         for i in range(len(obj_list)):
             #plot update for debugging
-            print 'before updating, positions =' ,  obtain_centroid_pos(obj_list)
-            delta_x = SDG_update(obj_list,i,xmin,xmax,ymin,ymax)
+            #print 'before updating, positions =' ,  obtain_centroid_pos(obj_list)
+            delta_x = SDG_update(obj_list,update_order[i],xmin,xmax,ymin,ymax)
+
+            delta_vec = np.zeros((num_objects,2),dtype = 'float')
+            delta_vec[update_order[i],:] = delta_x
+            item_lists.update_delta_pos(delta_vec)
+
             if animator is not None:
-                delta_vec = np.zeros((num_objects,2),dtype = 'float')
-                delta_vec[i,:] = delta_x
-                item_lists.update_delta_pos(delta_vec)
                 animator.update_circular_objects(item_lists.circ_position,item_lists.circ_collision,0.1)
                 animator.update_polygon_objects(item_lists.poly_verts,item_lists.poly_collision,0.1)
                 #for debug
-                print 'current center positions =' ,  obtain_centroid_pos(obj_list)
+                #print 'current center positions =' ,  obtain_centroid_pos(obj_list)
                 #variable = raw_input('input something!: ')
 
-               
-                #animator.remove_circles()
-                #animator.remove_polygons()
-                
-                
+         
+        #post-processing
+        collision_free , num_infeasible = item_lists.num_infeasible()
+        print 'number of infeasible objects are: ', num_infeasible
+        if not collision_free:
+            post_process(obj_list,item_lists,xmin,xmax,ymin,ymax)
+
+        #prepare for next iteration
+        update_order=compute_update_order(obj_list)
 
         #update counter
         iterate +=1
@@ -63,7 +72,7 @@ def SDG_tiling(circ_list,poly_list,template,animator = None,item_lists =None):
         #comparsion for convergence
         update_centroid_pos = obtain_centroid_pos(obj_list)
 
-        print 'update_centroid_pos= ',update_centroid_pos
+        #print 'update_centroid_pos= ',update_centroid_pos
         converge = np.sum(np.sum((centroid_pos - update_centroid_pos)**2)) /(num_objects+0.0) <tol
 
         print 'local converge =', np.sum(np.sum((centroid_pos - update_centroid_pos)**2)) /(num_objects+0.0)
@@ -76,6 +85,53 @@ def SDG_tiling(circ_list,poly_list,template,animator = None,item_lists =None):
     print 'return solution after ', iterate, 'iterations'
     #return the updated object list and convergence flag
     return circ_list, poly_list, converge
+
+def compute_update_order(obj_list):
+    dist_to_origin_vec = np.zeros(len(obj_list),dtype = 'float')
+    for i in range(len(obj_list)):
+        dist_to_origin_vec[i] = np.linalg.norm(obj_list[i].get_position())
+
+    return np.argsort(dist_to_origin_vec)
+
+'''post process the current solution'''
+def post_process(obj_list,item_lists,xmin,xmax,ymin,ymax):
+
+    #1. offset every objects if possible
+    obj_l_lim = 0; obj_r_lim = 0; obj_d_lim=0; obj_u_lim=0
+    num_objects = len(obj_list)
+    for i in range(num_objects):
+        l,r,d,u = obj_list[i].find_extreme_pt()
+        obj_l_lim = min(obj_l_lim,l)
+        obj_r_lim = max(obj_r_lim,r)
+        obj_d_lim = min(obj_d_lim,d)
+        obj_u_lim = max(obj_u_lim,u)
+
+    print 'limits are:', obj_l_lim, obj_r_lim, obj_d_lim, obj_u_lim
+
+    # compute new boundary
+    dx = 0.0
+    dy = 0.0
+    if obj_l_lim > xmin:
+        dx = -xmin + obj_l_lim
+    if obj_r_lim < xmax:
+        dx = xmax - obj_r_lim
+    if obj_d_lim > ymin:
+        dy = -ymin + obj_d_lim
+    if obj_u_lim < ymax:
+        dy = ymax - obj_u_lim
+
+    # shift every objects
+    for i in range(len(obj_list)):
+        obj_list[i].increment_pos(np.array([dx,dy]))
+
+    delta_vec = np.zeros((num_objects,2),dtype = 'float')
+    delta_vec[:,0] += dx;  delta_vec[:,0] += dy
+    item_lists.update_delta_pos(delta_vec)
+
+    #2. mutate outside objects
+
+    variable = raw_input('input something!: ')
+    
 
 ''' function that copies all centroid positions of the object into a numpy array through DEEPCOPY'''
 def obtain_centroid_pos(obj_list):
@@ -147,7 +203,8 @@ def SDG_update(obj_list,ind,xmin,xmax,ymin,ymax):
     obj = obj_list[ind]
 
     #randomly select a subset of items
-    num_to_select = len(obj_list)-1
+    #num_to_select = len(obj_list)-1
+    num_to_select = min(5,len(obj_list)-1)
     select_array = np.concatenate([np.array(range(0,ind)),np.array(range(ind+1,len(obj_list)))])
     #print 'select array is: ', select_array
     #print 'num_to_select is: ', num_to_select
@@ -155,17 +212,18 @@ def SDG_update(obj_list,ind,xmin,xmax,ymin,ymax):
 
     #define constants
     K = 0.1*3
-    G = 0.1*0.3
+    G = -0.1*0.2
     #origin = np.array([xmin,ymin])
     origin = np.array([0,0])
     #compute displacement due to global potenial
     disp = -K * (obj.get_position() - origin)
+    print 'position = ', obj.get_position()
    
     #compute influence due to other selected objects
     for neighbor_ind in neighbor_indices:
         neighbor_ind = int(neighbor_ind)
         local_dir = obj.centroid_dir(obj_list[neighbor_ind])
-        disp += G * obj_list[neighbor_ind].area / obj.centroid_dist(obj_list[neighbor_ind]) * local_dir
+        disp -= G * obj_list[neighbor_ind].area / obj.centroid_dist(obj_list[neighbor_ind]) * local_dir
 
     print 'initial disp =', disp
     #restrict the magnitude of disp to avoid collision
@@ -276,8 +334,8 @@ if __name__ == '__main__':
     poly_list_short = [poly1]
     #use stochastic methods to tile all items and return the convergene flag
 
-    incl_circ, incl_poly, converge = SDG_tiling(circ_list,poly_list,template)
-    print 'method has converged = ', converge
+    #incl_circ, incl_poly, converge = SDG_tiling(circ_list,poly_list,template)
+    #print 'method has converged = ', converge
 
     #incl_circ, incl_poly, converge =  SDG_tiling(circ_list_short,poly_list_short,template)
     #print 'method has converged = ', converge
