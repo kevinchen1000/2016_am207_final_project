@@ -107,6 +107,25 @@ class obj_circle:
     def get_position(self):
         return self.pos
 
+    ''' untangle collision with bounding box'''
+    def untangle_template(self,template):
+        #put polygon inside the template
+        if -self.radius + self.pos[0] < template[0]:
+            print 'too left...'
+            self.pos[0] += template[0] - (-2*self.radius + self.pos[0])
+
+        if -self.radius + self.pos[0] > template[1]:
+            print 'too right...'
+            self.pos[0] += template[1] - (2*self.radius + self.pos[1])
+
+        if  self.radius + self.pos[0] < template[2]:
+            print 'too low...'
+            self.pos[1] += template[2] - (-2*self.radius + self.pos[0])
+
+        if  self.radius + self.pos[1] > template[3]:
+            print 'too up...'
+            self.pos[1] += template[3] - (2*self.radius + self.pos[1])
+
     '''untangle collision with an object '''
     def untangle_collision(self,obj,opt='self'):
         if isinstance(obj,obj_circle):
@@ -255,6 +274,21 @@ class obj_polygon:
         self.area = self.polygon_area(self.verts)
         self.centroid = self.polygon_centroid(self.verts,self.area)
         self.bounding_box = self.find_bounding_box(self.verts)
+
+    ''' untangle collision with bounding box'''
+    def untangle_template(self,template):
+        #put polygon inside the template
+        if self.bounding_box[0]+ self.offset[0] < template[0]:
+            self.offset[0] += template[0] - (self.bounding_box[0]+ self.offset[0])
+
+        if self.bounding_box[2]+ self.offset[1] < template[2]:
+            self.offset[2] += template[2] - (self.bounding_box[2]+ self.offset[1])
+
+        if self.bounding_box[1]+ self.offset[0] > template[1]:
+            self.offset[1] += template[1] - (self.bounding_box[1]+ self.offset[0])
+
+        if self.bounding_box[3]+ self.offset[1] > template[3]:
+            self.offset[3] += template[3] - (self.bounding_box[3]+ self.offset[1])
 
     '''set polygon offset'''
     def set_pos(self,new_offset):
