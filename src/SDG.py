@@ -274,7 +274,7 @@ def mutate_direction(disp):
     mag = np.linalg.norm(disp)
     new_dir = np.array([math.cos(theta+dtheta),math.sin(theta+dtheta)])
 
-    return mag * new_dir
+    return 20 * new_dir
 
 '''initialize the tiling positions of objects that are collision free but may intersect template
    borders
