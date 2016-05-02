@@ -80,7 +80,7 @@ def update_local_tile_list(tile_list,row_ind,xpos,ypos,obj_ind,obj):
 #assume that the object can be added
 def update_tile_list(tile_list,obj,obj_ind,obj_list,xmin=-10.0,xmax=10.0,ymin=-10.0,ymax=10.0):
     #define a small offset
-    eps = 1e-8
+    eps = 1e-3
 
     #empty tile_list
     if len(tile_list[0]) == 0:

@@ -520,14 +520,14 @@ class obj_polygon:
         assert(isinstance(polygon,obj_polygon))
 
         #check if vertices of polygon is in the current object
-         
+        
         for i in range(len(polygon.verts)):
-            if self.isIn_poly(np.array(polygon.verts[i])):
+            if self.isIn_poly(np.array(polygon.verts[i])+polygon.offset):
                 return True
 
         #check if object vertices are contained in the polygon
         for i in range(len(self.verts)):
-            if polygon.isIn_poly(np.array(self.verts[i])):
+            if polygon.isIn_poly(np.array(self.verts[i]+self.offset)):
                 return True
         
         for i in range(len(polygon.verts)-1):
