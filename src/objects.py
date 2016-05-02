@@ -704,6 +704,23 @@ class object_lists:
         #for plotting polygons
         self.poly_verts, self.poly_collision = self.generate_poly_info()
 
+    '''re-compute information'''
+    #same function as update_delta_pos, but do not update object positions#
+    def update_info(self):
+        #re-compute all information due to change of positions....................
+        #compute distance matrix of every object to other objects
+        self.dist_mat = self.generate_distance_matrix()
+
+        #compute collision matrix (0 is not collide, 1 is collide with all other objects)
+        #compute collision_free vector (True or False) , whether each object is free
+        self.collision_mat,self.collision_vec= self.generate_collision_matrix() 
+
+        #for plotting circles
+        self.circ_diameter, self.circ_position, self.circ_collision = self.generate_circ_info()
+
+        #for plotting polygons
+        self.poly_verts, self.poly_collision = self.generate_poly_info()
+
 
     '''check if current tiling is feasible'''
     def num_infeasible(self):

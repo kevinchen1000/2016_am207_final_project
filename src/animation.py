@@ -82,8 +82,8 @@ class Animator(object):
         self.circle_labels = text_labels
 
         #draw to screen
-        plt.draw()
-        plt.pause(pause_time)
+        #plt.draw()
+        #plt.pause(pause_time)
 
         #remove text labels
         #for i in range(len(collision)):
