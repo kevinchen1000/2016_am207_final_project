@@ -61,8 +61,8 @@ def SDG_tiling(circ_list,poly_list,template,animator = None,item_lists =None):
         #post-processing
         collision_free , num_infeasible = item_lists.num_infeasible()
         print 'number of infeasible objects are: ', num_infeasible
-        if not collision_free:
-            post_process(obj_list,item_lists,xmin,xmax,ymin,ymax)
+        #if not collision_free:
+            #post_process(obj_list,item_lists,xmin,xmax,ymin,ymax)
 
         #for i in range(num_objects):
         #    print 'object [', i ,'] at ', obj_list[i].get_position()
@@ -112,10 +112,11 @@ def post_process(obj_list,item_lists,xmin,xmax,ymin,ymax):
         obj_u_lim = max(obj_u_lim,u)
 
     print 'limits are:', obj_l_lim, obj_r_lim, obj_d_lim, obj_u_lim
-
+    #variable = raw_input('input something!: ')
     # compute new boundary
     dx = 0.0
     dy = 0.0
+    
     if obj_l_lim > xmin:
         dx = xmin - obj_l_lim
     if obj_r_lim < xmax:
@@ -124,6 +125,7 @@ def post_process(obj_list,item_lists,xmin,xmax,ymin,ymax):
         dy = ymin - obj_d_lim
     if obj_u_lim < ymax:
         dy = ymax - obj_u_lim
+    
 
     # shift every objects
     for i in range(len(obj_list)):
@@ -292,7 +294,7 @@ def initialize_tiling_positions(obj_list,xmin,xmax,ymin,ymax):
         init_x = init[0][0]; init_y = init[0][1]
 
         # method 2 -- based on size
-        dist = min(80.0,10.0 + 200.0 / obj_list[i].area)
+        dist = min(80.0,5.0 + 300.0 / obj_list[i].area)
         theta = np.random.rand(1) * 2 * np.pi
         init_x = dist * math.cos(theta)
         init_y = dist * math.sin(theta)
