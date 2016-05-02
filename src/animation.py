@@ -39,6 +39,7 @@ class Animator(object):
         #save animator canvas area
         self.width = template_w
         self.height = template_h
+        self.title = plt.text(0,20,'start title',color = 'k')
 
     #plot template
     def plot_template(self,l = 20.0, w = 20.0):
@@ -170,6 +171,7 @@ class Animator(object):
         #remove labels
         for label in self.polygon_labels:
             label.remove()
+        #self.title.remove()
 
         #add new labels
         num_circles = self.circles.get_offsets().shape[0]
@@ -187,6 +189,12 @@ class Animator(object):
 
         plt.draw()
         plt.pause(pause_time)
+
+    #display the total area covered
+    def show_title(self,area,pause_time=0.1):
+        title = plt.text(-5,21,'total covered area =  '+ str(area),color = 'k',fontsize = 20)
+        self.title.remove()
+        self.title = title
 
 
 #testing 

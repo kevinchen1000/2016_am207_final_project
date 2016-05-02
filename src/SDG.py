@@ -51,8 +51,10 @@ def SDG_tiling(circ_list,poly_list,template,animator = None,item_lists =None):
             item_lists.update_delta_pos(delta_vec)
 
             if animator is not None:
-                animator.update_circular_objects(item_lists.circ_position,item_lists.circ_collision,0.1)
-                animator.update_polygon_objects(item_lists.poly_verts,item_lists.poly_collision,0.1)
+                animator.update_circular_objects(item_lists.circ_position,item_lists.circ_collision,0.0001)
+                animator.update_polygon_objects(item_lists.poly_verts,item_lists.poly_collision,0.0001)
+                total_covered_area = item_lists.compute_total_covered_area()
+                animator.show_title(total_covered_area,0.4)
                 #for debug
                 #print 'current center positions =' ,  obtain_centroid_pos(obj_list)
                 #variable = raw_input('input something!: ')
@@ -259,7 +261,7 @@ def SDG_update(obj_list,ind,xmin,xmax,ymin,ymax):
         if not proceed_flag and not obj_list[ind].isIn_template(template):
             print "........needs re-search...........",ind, obj_list[ind].get_position()
             #variable = raw_input('input something!: ')
-            disp = mutate_direction(disp)
+            disp = mutate_direction(disp,obj_list[ind].area)
         count +=1
     
     #final_disp= restrict_disp(disp,obj_list,ind,xmin,xmax,ymin,ymax)
@@ -273,14 +275,14 @@ def SDG_update(obj_list,ind,xmin,xmax,ymin,ymax):
     return final_disp
 
 ''' mutate direction'''
-def mutate_direction(disp):
+def mutate_direction(disp,area):
     theta = math.atan2(disp[1],disp[0])
     dtheta =  (np.random.rand(1)-0.5) * 2 *np.pi
     #dtheta = np.pi/2
     mag = np.linalg.norm(disp)
     new_dir = np.array([math.cos(theta+dtheta),math.sin(theta+dtheta)])
 
-    return 20 * new_dir
+    return min(100.0,1.0 + 500.0 / area) * new_dir
 
 '''initialize the tiling positions of objects that are collision free but may intersect template
    borders
@@ -415,7 +417,9 @@ if __name__ == '__main__':
 
                 
     animator.add_polygon_objects(item_lists.poly_verts,\
-                                 item_lists.poly_collision,0.5)
+                                 item_lists.poly_collision,0.1)
+
+    #animator.show_title(np.random.rand(1),0.4)
 
     circ_list, poly_list, converge = SDG_tiling(circ_list_short,poly_list_short,template,animator,item_lists)
     '''
@@ -429,9 +433,12 @@ if __name__ == '__main__':
 
                 
     animator.add_polygon_objects(item_lists.poly_verts,\
-                                 item_lists.poly_collision,0.5)
+                                 item_lists.poly_collision,0.1)
+
+    animator.show_title(50,0.4)
 
     circ_list, poly_list, converge = SDG_tiling(circ_list,poly_list,template,animator,item_lists)
+
 
     
 

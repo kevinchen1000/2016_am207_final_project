@@ -596,6 +596,16 @@ class object_lists:
 
         print self.collision_mat
 
+        
+    def compute_total_covered_area(self):
+        total_area = 0
+        obj_list = self.circles + self.polygons
+        for i in range((self.num_circles+self.num_polygons)):
+            if self.collision_vec[i] == False: 
+                total_area += obj_list[i].area
+                
+        return total_area
+
 
 
 
