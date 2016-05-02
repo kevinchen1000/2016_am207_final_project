@@ -61,9 +61,9 @@ def SDG_tiling(circ_list,poly_list,template,animator = None,item_lists =None):
         #post-processing
         collision_free , num_infeasible = item_lists.num_infeasible()
         print 'number of infeasible objects are: ', num_infeasible
-        #if not collision_free:
-            #post_process(obj_list,item_lists,xmin,xmax,ymin,ymax)
-
+        if not collision_free:
+            post_process(obj_list,item_lists,xmin,xmax,ymin,ymax)
+        #variable = raw_input('after post processing: ')
         #for i in range(num_objects):
         #    print 'object [', i ,'] at ', obj_list[i].get_position()
         #variable = raw_input('input something!: ')
@@ -102,7 +102,7 @@ def compute_update_order(obj_list):
 def post_process(obj_list,item_lists,xmin,xmax,ymin,ymax):
 
     #1. offset every objects if possible
-    obj_l_lim = 0; obj_r_lim = 0; obj_d_lim=0; obj_u_lim=0
+    obj_l_lim = 1000; obj_r_lim = -1000; obj_d_lim=1000; obj_u_lim=-1000
     num_objects = len(obj_list)
     for i in range(num_objects):
         l,r,d,u = obj_list[i].find_extreme_pt()
@@ -112,27 +112,31 @@ def post_process(obj_list,item_lists,xmin,xmax,ymin,ymax):
         obj_u_lim = max(obj_u_lim,u)
 
     print 'limits are:', obj_l_lim, obj_r_lim, obj_d_lim, obj_u_lim
-    #variable = raw_input('input something!: ')
+    for i in range(len(obj_list)):
+        print 'object[', i, '] at ', obj_list[i].get_position()
+  
     # compute new boundary
     dx = 0.0
     dy = 0.0
     
     if obj_l_lim > xmin:
         dx = xmin - obj_l_lim
-    if obj_r_lim < xmax:
+    elif obj_r_lim < xmax:
         dx = xmax - obj_r_lim
-    if obj_d_lim > ymin:
+    elif obj_d_lim > ymin:
         dy = ymin - obj_d_lim
-    if obj_u_lim < ymax:
+    elif obj_u_lim < ymax:
         dy = ymax - obj_u_lim
-    
 
+
+    #print 'dx ,dy = ', dx, dy
+    #variable = raw_input('input something!: ')
     # shift every objects
-    for i in range(len(obj_list)):
-        obj_list[i].increment_pos(np.array([dx,dy]))
+    #for i in range(len(obj_list)):
+    #    obj_list[i].increment_pos(np.array([dx,dy]))
 
     delta_vec = np.zeros((num_objects,2),dtype = 'float')
-    delta_vec[:,0] += dx;  delta_vec[:,0] += dy
+    delta_vec[:,0] += dx;  delta_vec[:,1] += dy
     item_lists.update_delta_pos(delta_vec)
 
     #2. mutate outside objects
@@ -230,7 +234,7 @@ def SDG_update(obj_list,ind,xmin,xmax,ymin,ymax):
 
     #define constants
     K = 0.1*3
-    G = -0.1*0.2
+    G = -0.1*0.05
     #origin = np.array([xmin,ymin])
     origin = np.array([0,0])
     #compute displacement due to global potenial
@@ -294,7 +298,8 @@ def initialize_tiling_positions(obj_list,xmin,xmax,ymin,ymax):
         init_x = init[0][0]; init_y = init[0][1]
 
         # method 2 -- based on size
-        dist = min(80.0,5.0 + 300.0 / obj_list[i].area)
+        dist = min(100.0,1.0 + 500.0 / obj_list[i].area)
+        #dist = min(15.0,5.0 + 300.0 / obj_list[i].area)
         theta = np.random.rand(1) * 2 * np.pi
         init_x = dist * math.cos(theta)
         init_y = dist * math.sin(theta)
@@ -427,5 +432,6 @@ if __name__ == '__main__':
                                  item_lists.poly_collision,0.5)
 
     circ_list, poly_list, converge = SDG_tiling(circ_list,poly_list,template,animator,item_lists)
+
     
 
