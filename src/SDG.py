@@ -159,7 +159,7 @@ def obtain_centroid_pos(obj_list):
 
 ''' function that restricts displacement amplitude to avoid collision'''
 def restrict_disp(disp,obj_list,ind,xmin,xmax,ymin,ymax):
-    disp_mag =  np.linalg.norm(disp)
+    disp_mag =  min(10.0,np.linalg.norm(disp))
     disp_dir = disp / disp_mag
 
     temp_obj = copy.deepcopy(obj_list[ind])
