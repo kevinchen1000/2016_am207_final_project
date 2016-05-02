@@ -97,7 +97,7 @@ class Animator(object):
         self.ax.add_collection(self.polygons)
 
         #add text label
-        num_circles = self.circles.get_offsets().shape[0]+1
+        num_circles = self.circles.get_offsets().shape[0]
         #print 'number of circles =', num_circles
       
         text_labels = [None] * len(collision)
@@ -172,7 +172,7 @@ class Animator(object):
             label.remove()
 
         #add new labels
-        num_circles = self.circles.get_offsets().shape[0]+1
+        num_circles = self.circles.get_offsets().shape[0]
         #print self.polygons.get_offsets()
 
         #assert(0)

@@ -4,6 +4,7 @@ from objects import *
 from animation import *
 import numpy as np
 import random
+import math
 
 #Stochastic Gradient Descent to sequentially tile a template algorithm
 #circ_list : array of circle objects
@@ -63,6 +64,10 @@ def SDG_tiling(circ_list,poly_list,template,animator = None,item_lists =None):
         if not collision_free:
             post_process(obj_list,item_lists,xmin,xmax,ymin,ymax)
 
+        #for i in range(num_objects):
+        #    print 'object [', i ,'] at ', obj_list[i].get_position()
+        #variable = raw_input('input something!: ')
+
         #prepare for next iteration
         update_order=compute_update_order(obj_list)
 
@@ -112,11 +117,11 @@ def post_process(obj_list,item_lists,xmin,xmax,ymin,ymax):
     dx = 0.0
     dy = 0.0
     if obj_l_lim > xmin:
-        dx = -xmin + obj_l_lim
+        dx = xmin - obj_l_lim
     if obj_r_lim < xmax:
         dx = xmax - obj_r_lim
     if obj_d_lim > ymin:
-        dy = -ymin + obj_d_lim
+        dy = ymin - obj_d_lim
     if obj_u_lim < ymax:
         dy = ymax - obj_u_lim
 
@@ -130,7 +135,7 @@ def post_process(obj_list,item_lists,xmin,xmax,ymin,ymax):
 
     #2. mutate outside objects
 
-    variable = raw_input('input something!: ')
+    #ariable = raw_input('input something!: ')
     
 
 ''' function that copies all centroid positions of the object into a numpy array through DEEPCOPY'''
@@ -150,25 +155,28 @@ def restrict_disp(disp,obj_list,ind,xmin,xmax,ymin,ymax):
     disp_dir = disp / disp_mag
 
     temp_obj = copy.deepcopy(obj_list[ind])
-    
+  
     #detect if there is collision if incremented by full disp
     temp_obj.increment_pos(disp)
 
     extended_template = np.array([xmin,1000,ymin,1000])
     if if_collision_free(obj_list,ind,temp_obj) and (True or temp_obj.isIn_template(extended_template)):
         print 'ok to move entire distance, no collision'
-        return disp
+        return disp, True
 
     #otherwise, need to find the closest point
-    print 'not collision free if moved by total distance !!! '
-    num_iter = 20
+    #print 'not collision free if moved by total distance !!! '
+    #print 'currently restricting object number ',ind, ' at position', obj_list[ind].get_position(), \
+     #     'to position', temp_obj.get_position()
+
+    num_iter = 10
     iterate = 1
     collision_free = False
     temp_obj.increment_pos(-disp)
     total_disp_mag =0
 
     
-    print extended_template
+    #print extended_template
     #continuously half the displacement magnitude until no collision
     while iterate < num_iter:
 
@@ -176,6 +184,9 @@ def restrict_disp(disp,obj_list,ind,xmin,xmax,ymin,ymax):
         delta_mag = (0.5**iterate)*disp_mag
         temp_obj.increment_pos(delta_mag*disp_dir)
         
+        #print 'currently trying object number ',ind, ' at position', obj_list[ind].get_position(), \
+        #  'to position', temp_obj.get_position(), 'with delta_mag =', delta_mag, 'total_disp_mag= ', total_disp_mag
+
         #print 'will be inside template= ', temp_obj.isIn_template(extended_template)
         if if_collision_free(obj_list,ind,temp_obj) and (True or temp_obj.isIn_template(extended_template)):
             total_disp_mag += delta_mag
@@ -183,8 +194,13 @@ def restrict_disp(disp,obj_list,ind,xmin,xmax,ymin,ymax):
             temp_obj.increment_pos(-delta_mag*disp_dir)
     
         iterate +=1
+    
+    eps = 0.01
+    proceed_flag = np.abs(total_disp_mag) > eps
 
-    return total_disp_mag * disp_dir
+    #return total_disp_mag * disp_dir, True
+    return total_disp_mag * disp_dir, proceed_flag
+
 
 '''detect if the ind th object is collision free with the rest of obstacles'''
 def if_collision_free(obj_list,ind,temp_obj):
@@ -201,7 +217,7 @@ def SDG_update(obj_list,ind,xmin,xmax,ymin,ymax):
 
     #select the object to be updated
     obj = obj_list[ind]
-
+    template = np.array([xmin,xmax,ymin,ymax])
     #randomly select a subset of items
     #num_to_select = len(obj_list)-1
     num_to_select = min(5,len(obj_list)-1)
@@ -227,14 +243,38 @@ def SDG_update(obj_list,ind,xmin,xmax,ymin,ymax):
 
     print 'initial disp =', disp
     #restrict the magnitude of disp to avoid collision
-    disp = restrict_disp(disp,obj_list,ind,xmin,xmax,ymin,ymax)
+    
+    proceed_flag = False
+    count_lim = 5
+    count =0
+    while not proceed_flag and count < count_lim:
+        final_disp, proceed_flag = restrict_disp(disp,obj_list,ind,xmin,xmax,ymin,ymax)
 
-    print 'object [',ind, '] increments by', disp
+        if not proceed_flag and not obj_list[ind].isIn_template(template):
+            print "........needs re-search...........",ind, obj_list[ind].get_position()
+            #variable = raw_input('input something!: ')
+            disp = mutate_direction(disp)
+        count +=1
+    
+    #final_disp= restrict_disp(disp,obj_list,ind,xmin,xmax,ymin,ymax)
+    #variable = raw_input('input something!: ')
+
+    print 'object [',ind, '] increments by', final_disp
 
     #update position of object
     #obj_list[ind].increment_pos(disp)
     
-    return disp
+    return final_disp
+
+''' mutate direction'''
+def mutate_direction(disp):
+    theta = math.atan2(disp[1],disp[0])
+    dtheta =  (np.random.rand(1)-0.5) * 2 *np.pi
+    #dtheta = np.pi/2
+    mag = np.linalg.norm(disp)
+    new_dir = np.array([math.cos(theta+dtheta),math.sin(theta+dtheta)])
+
+    return mag * new_dir
 
 '''initialize the tiling positions of objects that are collision free but may intersect template
    borders
@@ -246,15 +286,17 @@ def initialize_tiling_positions(obj_list,xmin,xmax,ymin,ymax):
 
     #initialize the positions sequentially
     for i in range(len(obj_list)):
-        init = np.random.multivariate_normal(mean,cov,1)
-        #debug
-        
-        #if i==0:
-        #    init= np.array([[-10.0,10.0]])+10
-        #elif i == 1:
-        #    init= np.array([[1.0,-11.0]])+10
 
+        # method 1 -- based on gaussian distribution
+        init = np.random.multivariate_normal(mean,cov,1)
         init_x = init[0][0]; init_y = init[0][1]
+
+        # method 2 -- based on size
+        dist = min(80.0,10.0 + 200.0 / obj_list[i].area)
+        theta = np.random.rand(1) * 2 * np.pi
+        init_x = dist * math.cos(theta)
+        init_y = dist * math.sin(theta)
+
         obj_list[i].set_pos(np.array([init_x,init_y]))
         #obj_list[i].set_pos(np.abs(np.array([init_x,init_y])) +np.array([xmin,ymin]))
 
