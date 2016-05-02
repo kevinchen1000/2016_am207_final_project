@@ -594,7 +594,7 @@ class object_lists:
         #for plotting polygons
         self.poly_verts, self.poly_collision = self.generate_poly_info()
 
-        print self.collision_mat
+        #print self.collision_mat
 
         
     def compute_total_covered_area(self):

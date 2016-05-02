@@ -158,10 +158,10 @@ def obtain_centroid_pos(obj_list):
     return centroid_pos
 
 ''' function that restricts displacement amplitude to avoid collision'''
-def restrict_disp(disp,obj_list,ind,xmin,xmax,ymin,ymax):
+def restrict_disp(disp,obj_list,ind,xmin,xmax,ymin,ymax,num_iter):
     disp_mag =  min(10.0,np.linalg.norm(disp))
     disp_dir = disp / disp_mag
-
+    template = np.array([-10.0,10.0,-10.0,10.0])
     temp_obj = copy.deepcopy(obj_list[ind])
   
     #detect if there is collision if incremented by full disp
@@ -177,7 +177,7 @@ def restrict_disp(disp,obj_list,ind,xmin,xmax,ymin,ymax):
     #print 'currently restricting object number ',ind, ' at position', obj_list[ind].get_position(), \
      #     'to position', temp_obj.get_position()
 
-    num_iter = 10
+    #num_iter = 10
     iterate = 1
     collision_free = False
     temp_obj.increment_pos(-disp)
@@ -202,6 +202,20 @@ def restrict_disp(disp,obj_list,ind,xmin,xmax,ymin,ymax):
             temp_obj.increment_pos(-delta_mag*disp_dir)
     
         iterate +=1
+    '''
+    #check if a previously valid object is now invalid
+    final_check_obj = copy.deepcopy(obj_list[ind])
+    final_check_obj.increment_pos(total_disp_mag * disp_dir)
+    print 'object in template = ',obj_list[ind].isIn_template(template),\
+          ' and updated object is in template = ', final_check_obj.isIn_template(template)
+    if obj_list[ind].isIn_template(template) and final_check_obj.isIn_template(template):
+        print 'object in template = ',obj_list[ind].isIn_template(template),\
+          ' and updated object is in template = ', final_check_obj.isIn_template(template)
+        print 'big error'
+        assert(0)
+        total_disp_mag = 0.0
+        variable = raw_input('input something!: ')
+    '''
     
     eps = 0.01
     proceed_flag = np.abs(total_disp_mag) > eps
@@ -256,12 +270,20 @@ def SDG_update(obj_list,ind,xmin,xmax,ymin,ymax):
     count_lim = 5
     count =0
     while not proceed_flag and count < count_lim:
-        final_disp, proceed_flag = restrict_disp(disp,obj_list,ind,xmin,xmax,ymin,ymax)
+        final_disp, proceed_flag = restrict_disp(disp,obj_list,ind,xmin,xmax,ymin,ymax,10)
 
-        if not proceed_flag and not obj_list[ind].isIn_template(template):
-            print "........needs re-search...........",ind, obj_list[ind].get_position()
-            #variable = raw_input('input something!: ')
-            disp = mutate_direction(disp,obj_list[ind].area)
+        if not proceed_flag:
+            if not obj_list[ind].isIn_template(template):
+                print "...outside needs re-search...........",ind, obj_list[ind].get_position()
+                #variable = raw_input('input something!: ')
+                disp = mutate_direction(disp,obj_list[ind].area)
+            else:
+                print "...inside needs re-search.......", ind, obj_list[ind].get_position()
+                if np.random.rand(1)>0.8:
+                    disp = mutate_direction_short(disp,obj_list[ind])
+                else:
+                    break
+                
         count +=1
     
     #final_disp= restrict_disp(disp,obj_list,ind,xmin,xmax,ymin,ymax)
@@ -274,15 +296,31 @@ def SDG_update(obj_list,ind,xmin,xmax,ymin,ymax):
     
     return final_disp
 
-''' mutate direction'''
-def mutate_direction(disp,area):
+''' short_range mutate direction'''
+def mutate_direction_short(disp,obj):
     theta = math.atan2(disp[1],disp[0])
-    dtheta =  (np.random.rand(1)-0.5) * 2 *np.pi
+    dtheta =  (np.random.rand(1)-0.5) * (2-0.5) *np.pi
     #dtheta = np.pi/2
     mag = np.linalg.norm(disp)
     new_dir = np.array([math.cos(theta+dtheta),math.sin(theta+dtheta)])
+    
+    l,r,d,u = obj.find_extreme_pt()
+    dist1 = l+10; dist2 = 10 - r; dist3 = d+10; dist4 = 10-u
 
-    return min(100.0,1.0 + 500.0 / area) * new_dir
+    return min(2,dist1,dist2,dist3,dist4) * new_dir
+
+
+''' mutate direction'''
+def mutate_direction(disp,area):
+    theta = math.atan2(disp[1],disp[0])
+    dtheta =  (np.random.rand(1)-0.5) * np.pi
+    #dtheta = np.pi/2
+    mag = np.linalg.norm(disp)
+    new_dir = np.array([math.cos(theta+dtheta),math.sin(theta+dtheta)])
+    if np.random.rand(1) > 0.2:
+        return mag * new_dir
+    else:
+        return min(40.0,1.0 + 500.0 / area) * new_dir
 
 '''initialize the tiling positions of objects that are collision free but may intersect template
    borders
