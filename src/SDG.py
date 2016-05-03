@@ -59,17 +59,17 @@ def SDG_tiling(circ_list,poly_list,template,animator = None,item_lists =None):
         #comparsion for convergence
         update_centroid_pos = obtain_centroid_pos(obj_list)
 
-        print 'update_centroid_pos= ',update_centroid_pos
+        # print 'update_centroid_pos= ',update_centroid_pos
         converge = np.sum(np.sum((centroid_pos - update_centroid_pos)**2)) /(num_objects+0.0) <tol
 
-        print 'local converge =', np.sum(np.sum((centroid_pos - update_centroid_pos)**2)) /(num_objects+0.0)
+        # print 'local converge =', np.sum(np.sum((centroid_pos - update_centroid_pos)**2)) /(num_objects+0.0)
         centroid_pos = copy.deepcopy(update_centroid_pos)
 
 
-    print centroid_pos
-    print update_centroid_pos
-    print 'error =',  np.sum(np.sum((centroid_pos - update_centroid_pos)**2)) /(num_objects+0.0)
-    print 'return solution after ', iterate, 'iterations'
+    # print centroid_pos
+    # print update_centroid_pos
+    # print 'error =',  np.sum(np.sum((centroid_pos - update_centroid_pos)**2)) /(num_objects+0.0)
+    # print 'return solution after ', iterate, 'iterations'
     #return the updated object list and convergence flag
     return circ_list, poly_list, converge
 
@@ -139,11 +139,11 @@ def SDG_update(obj_list,ind,xmin,xmax,ymin,ymax):
         local_dir = obj.centroid_dir(obj_list[neighbor_ind])
         disp += G * obj_list[neighbor_ind].area / obj.centroid_dist(obj_list[neighbor_ind]) * local_dir
 
-    print 'initial disp =', disp
+    # print 'initial disp =', disp
     #restrict the magnitude of disp to avoid collision
     disp = restrict_disp(disp,obj_list,ind)
 
-    print 'object [',ind, '] increments by', disp
+    # print 'object [',ind, '] increments by', disp
 
     #update position of object
     obj_list[ind].increment_pos(disp)
@@ -174,7 +174,7 @@ def initialize_tiling_positions(obj_list,xmin,xmax,ymin,ymax):
 
 #driver script
 if __name__ == '__main__':
-    print 'stochastic gradient descent starts...'
+    # print 'stochastic gradient descent starts...'
 
 
    
@@ -231,7 +231,7 @@ if __name__ == '__main__':
     #use stochastic methods to tile all items and return the convergene flag
 
     incl_circ, incl_poly, converge = SDG_tiling(circ_list,poly_list,template)
-    print 'method has converged = ', converge
+    # print 'method has converged = ', converge
 
     #incl_circ, incl_poly, converge =  SDG_tiling(circ_list_short,poly_list_short,template)
     #print 'method has converged = ', converge

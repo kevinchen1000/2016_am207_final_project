@@ -31,7 +31,7 @@ def input_generator(template):
 			radius = np.random.uniform(low=0.1, high=animator_width*1./4.)
 			# maybe later when we want to put object starting from random positions...
 			center = np.random.uniform(low=-animator_width*1./2.+radius, high=animator_width*1./2.-radius)
-			circle = obj_circle(np.array([center, center]), radius)
+			circle = obj_circle(np.array([0., 0.]), radius)
 			circle_list.append(circle)
 			input_area += circle.area
 		else:
