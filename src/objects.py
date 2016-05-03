@@ -107,6 +107,34 @@ class obj_circle:
     def get_position(self):
         return self.pos
 
+    ''' find extreme points of the circle bounding box'''
+    def find_extreme_pt(self):
+        l = -self.radius + self.pos[0]
+        r = self.radius + self.pos[0]
+        d = -self.radius + self.pos[1]
+        u = self.radius + self.pos[1]
+ 
+        return l,r,d,u
+
+    ''' untangle collision with bounding box'''
+    def untangle_template(self,template):
+        #put polygon inside the template
+        if -self.radius + self.pos[0] < template[0]:
+            print 'too left...'
+            self.pos[0] += template[0] - (-2*self.radius + self.pos[0])
+
+        if -self.radius + self.pos[0] > template[1]:
+            print 'too right...'
+            self.pos[0] += template[1] - (2*self.radius + self.pos[1])
+
+        if  self.radius + self.pos[0] < template[2]:
+            print 'too low...'
+            self.pos[1] += template[2] - (-2*self.radius + self.pos[0])
+
+        if  self.radius + self.pos[1] > template[3]:
+            print 'too up...'
+            self.pos[1] += template[3] - (2*self.radius + self.pos[1])
+
     '''untangle collision with an object '''
     def untangle_collision(self,obj,opt='self'):
         if isinstance(obj,obj_circle):
@@ -256,6 +284,21 @@ class obj_polygon:
         self.centroid = self.polygon_centroid(self.verts,self.area)
         self.bounding_box = self.find_bounding_box(self.verts)
 
+    ''' untangle collision with bounding box'''
+    def untangle_template(self,template):
+        #put polygon inside the template
+        if self.bounding_box[0]+ self.offset[0] < template[0]:
+            self.offset[0] += template[0] - (self.bounding_box[0]+ self.offset[0])
+
+        if self.bounding_box[2]+ self.offset[1] < template[2]:
+            self.offset[2] += template[2] - (self.bounding_box[2]+ self.offset[1])
+
+        if self.bounding_box[1]+ self.offset[0] > template[1]:
+            self.offset[1] += template[1] - (self.bounding_box[1]+ self.offset[0])
+
+        if self.bounding_box[3]+ self.offset[1] > template[3]:
+            self.offset[3] += template[3] - (self.bounding_box[3]+ self.offset[1])
+
     '''set polygon offset'''
     def set_pos(self,new_offset):
         self.offset = new_offset
@@ -403,6 +446,15 @@ class obj_polygon:
         #print np.array([min_vec[0],max_vec[0],min_vec[1],max_vec[1]])
         return np.array([min_vec[0],max_vec[0],min_vec[1],max_vec[1]])
 
+    ''' find extreme points of the polygon bounding box'''
+    def find_extreme_pt(self):
+        l = self.bounding_box[0] + self.offset[0]
+        r = self.bounding_box[1] + self.offset[0]
+        d = self.bounding_box[2] + self.offset[1]
+        u = self.bounding_box[3] + self.offset[1]
+
+        return l,r,d,u
+
     ''' find the polygon centroid on ccw input vertices'''
     def polygon_centroid(self,verts,area):
         cx=0; cy=0
@@ -468,16 +520,16 @@ class obj_polygon:
         assert(isinstance(polygon,obj_polygon))
 
         #check if vertices of polygon is in the current object
-        '''  
+        
         for i in range(len(polygon.verts)):
-            if self.isIn_poly(np.array(polygon.verts[i])):
+            if self.isIn_poly(np.array(polygon.verts[i])+polygon.offset):
                 return True
 
         #check if object vertices are contained in the polygon
         for i in range(len(self.verts)):
-            if polygon.isIn_poly(np.array(self.verts[i])):
+            if polygon.isIn_poly(np.array(self.verts[i]+self.offset)):
                 return True
-        '''
+        
         for i in range(len(polygon.verts)-1):
             for j in range(len(self.verts)-1):
                 A1 =np.array(polygon.verts[i])+polygon.offset
@@ -542,7 +594,17 @@ class object_lists:
         #for plotting polygons
         self.poly_verts, self.poly_collision = self.generate_poly_info()
 
-        print self.collision_mat
+        #print self.collision_mat
+
+        
+    def compute_total_covered_area(self):
+        total_area = 0
+        obj_list = self.circles + self.polygons
+        for i in range((self.num_circles+self.num_polygons)):
+            if self.collision_vec[i] == False: 
+                total_area += obj_list[i].area
+                
+        return total_area
 
 
 
@@ -641,6 +703,39 @@ class object_lists:
 
         #for plotting polygons
         self.poly_verts, self.poly_collision = self.generate_poly_info()
+
+    '''re-compute information'''
+    #same function as update_delta_pos, but do not update object positions#
+    def update_info(self):
+        #re-compute all information due to change of positions....................
+        #compute distance matrix of every object to other objects
+        self.dist_mat = self.generate_distance_matrix()
+
+        #compute collision matrix (0 is not collide, 1 is collide with all other objects)
+        #compute collision_free vector (True or False) , whether each object is free
+        self.collision_mat,self.collision_vec= self.generate_collision_matrix() 
+
+        #for plotting circles
+        self.circ_diameter, self.circ_position, self.circ_collision = self.generate_circ_info()
+
+        #for plotting polygons
+        self.poly_verts, self.poly_collision = self.generate_poly_info()
+
+
+    '''check if current tiling is feasible'''
+    def num_infeasible(self):
+        infeasible_count = 0
+        for i in range(len(self.collision_vec)):
+            if self.collision_vec[i] == True:
+                infeasible_count +=1
+
+        if infeasible_count ==0:
+            collision_free = True
+        else:
+            collision_free = False
+
+        return collision_free, infeasible_count
+ 
 
 
 

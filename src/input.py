@@ -1,5 +1,6 @@
 import numpy as np
 from objects import *
+from animation import *
 
 def input_generator(template):
 	'''
@@ -32,6 +33,7 @@ def input_generator(template):
 			# maybe later when we want to put object starting from random positions...
 			center = np.random.uniform(low=-animator_width*1./2.+radius, high=animator_width*1./2.-radius)
 			circle = obj_circle(np.array([0., 0.]), radius)
+			circle = obj_circle(np.array([0.0,0.0]), radius)
 			circle_list.append(circle)
 			input_area += circle.area
 		else:
@@ -57,6 +59,7 @@ def input_generator(template):
 				# offset_y = np.random.uniform(low=(-animator.width+top_point)*1./2., high=(animator.width-top_point)*1./2.)
 
 				triangle = obj_polygon(vertex, np.array([0.0,0.0]))
+
 				polygon_list.append(triangle)
 
 				input_area += triangle.area
@@ -163,5 +166,23 @@ def input_generator(template):
 	# input_object = object_lists(circle_list, polygon_list, template)
 	return circle_list, polygon_list
 
-template = np.array([-10.0,10.0,-10.0,10.0])
-print input_generator(template)
+
+
+
+if __name__ == '__main__': 
+    template = np.array([-10.0,10.0,-10.0,10.0])
+    print input_generator(template)
+
+    circ_list, poly_list = input_generator(template)
+
+    item_lists = object_lists(circ_list,poly_list,template)
+
+    #add to animator
+    animator = Animator(20,20)
+    animator.add_circular_objects(item_lists.circ_diameter,\
+                                  item_lists.circ_position,\
+                                  item_lists.circ_collision,0.1)
+
+    animator.add_polygon_objects(item_lists.poly_verts,\
+                                  item_lists.poly_collision,100)
+

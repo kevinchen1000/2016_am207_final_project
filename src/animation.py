@@ -20,7 +20,9 @@ class Animator(object):
         fig = plt.figure(figsize = (10,10))
         ax = fig.gca()
 
-        ax.axis([-template_w/2.0, template_w/2.0,-template_h/2.0,template_h/2.0]) 
+        #set axis dimension 
+        ax.axis( [-2*template_w/2.0, 2*template_w/2.0,-2*template_h/2.0,2*template_h/2.0]) 
+        #ax.axis([-template_w/2.0, template_w/2.0,-template_h/2.0,template_h/2.0]) 
         ax.get_xaxis().set_visible(True)
         ax.get_yaxis().set_visible(True)
 
@@ -37,6 +39,7 @@ class Animator(object):
         #save animator canvas area
         self.width = template_w
         self.height = template_h
+        self.title = plt.text(0,20,'start title',color = 'k')
 
     #plot template
     def plot_template(self,l = 20.0, w = 20.0):
@@ -75,12 +78,12 @@ class Animator(object):
         #add text label
         text_labels = [None] * len(collision)
         for i in range(len(collision)):
-            text_labels[i]= plt.text(positions[i,0],positions[i,1],str(i),color = 'w')
+            text_labels[i]= plt.text(positions[i,0],positions[i,1],str(i),color = 'k')
         self.circle_labels = text_labels
 
         #draw to screen
-        plt.draw()
-        plt.pause(pause_time)
+        #plt.draw()
+        #plt.pause(pause_time)
 
         #remove text labels
         #for i in range(len(collision)):
@@ -95,7 +98,7 @@ class Animator(object):
         self.ax.add_collection(self.polygons)
 
         #add text label
-        num_circles = self.circles.get_offsets().shape[0]+1
+        num_circles = self.circles.get_offsets().shape[0]
         #print 'number of circles =', num_circles
       
         text_labels = [None] * len(collision)
@@ -103,7 +106,8 @@ class Animator(object):
             temp = np.array(verts[i])
             x = np.mean(temp[:,0])
             y = np.mean(temp[:,1])
-            text_labels[i]= plt.text(x,y,str(i+num_circles),color = 'w')
+        
+            text_labels[i]= plt.text(x,y,str(i+num_circles),color = 'k')
 
         self.polygon_labels = text_labels
 
@@ -145,7 +149,7 @@ class Animator(object):
         #add labels
         text_labels = [None] * len(collision)
         for i in range(len(collision)):
-            text_labels[i]= plt.text(positions[i,0],positions[i,1],str(i),color = 'w')
+            text_labels[i]= plt.text(positions[i,0],positions[i,1],str(i),color = 'k')
         self.circle_labels = text_labels
 
 
@@ -167,9 +171,10 @@ class Animator(object):
         #remove labels
         for label in self.polygon_labels:
             label.remove()
+        #self.title.remove()
 
         #add new labels
-        num_circles = self.circles.get_offsets().shape[0]+1
+        num_circles = self.circles.get_offsets().shape[0]
         #print self.polygons.get_offsets()
 
         #assert(0)
@@ -178,12 +183,18 @@ class Animator(object):
             temp = np.array(positions[i])
             x = np.mean(temp[:,0])
             y = np.mean(temp[:,1])
-            text_labels[i]= plt.text(x,y,str(i+num_circles),color = 'w')
+            text_labels[i]= plt.text(x,y,str(i+num_circles),color = 'k')
 
         self.polygon_labels = text_labels
 
         plt.draw()
         plt.pause(pause_time)
+
+    #display the total area covered
+    def show_title(self,area,pause_time=0.1):
+        title = plt.text(-5,21,'total covered area =  '+ str(area),color = 'k',fontsize = 20)
+        self.title.remove()
+        self.title = title
 
 
 #testing 

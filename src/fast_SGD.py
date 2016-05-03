@@ -1,4 +1,4 @@
-#stochastic gradient descent solver
+#stochastic gradient descent solver (no graphics fast)
 
 from objects import *
 from animation import *
@@ -20,7 +20,7 @@ def SDG_tiling(circ_list,poly_list,template,animator = None,item_lists =None):
     #initialize arrangement at T = 0  
     #-->enforce no collision but may cross boundary of template (infeasible)
 
-    num_iter =100
+    num_iter =1000
     iterate = 0
     tol = 1e-5
     converge = False
@@ -36,35 +36,45 @@ def SDG_tiling(circ_list,poly_list,template,animator = None,item_lists =None):
 
     #update_order = np.arange(0,len(obj_list),dtype = 'int')
     update_order=compute_update_order(obj_list)
+    allfit = False
 
     #optimization step
-    while iterate < num_iter and not converge:
-
+    while (iterate < num_iter and not converge) and not allfit:
+        #print 'start'
+        #delta_vec = np.zeros((num_objects,2),dtype = 'float')
         #sequential movement of each object
         for i in range(len(obj_list)):
             #plot update for debugging
             #print 'before updating, positions =' ,  obtain_centroid_pos(obj_list)
+            #delta_vec = np.zeros((num_objects,2),dtype = 'float')
             delta_x = SDG_update(obj_list,update_order[i],xmin,xmax,ymin,ymax)
+            obj_list[update_order[i]].increment_pos(delta_x)
+            #delta_vec[update_order[i],:] = delta_x
 
-            delta_vec = np.zeros((num_objects,2),dtype = 'float')
-            delta_vec[update_order[i],:] = delta_x
-            item_lists.update_delta_pos(delta_vec)
+            #item_lists.update_delta_pos(delta_vec)
 
-            if animator is not None:
-                animator.update_circular_objects(item_lists.circ_position,item_lists.circ_collision,0.0001)
-                animator.update_polygon_objects(item_lists.poly_verts,item_lists.poly_collision,0.0001)
-                total_covered_area = item_lists.compute_total_covered_area()
-                animator.show_title(total_covered_area,0.4)
+            #if animator is not None:
+            #    animator.update_circular_objects(item_lists.circ_position,item_lists.circ_collision,0.0001)
+            #    animator.update_polygon_objects(item_lists.poly_verts,item_lists.poly_collision,0.0001)
+            #    total_covered_area = item_lists.compute_total_covered_area()
+            #   animator.show_title(total_covered_area,0.4)
                 #for debug
                 #print 'current center positions =' ,  obtain_centroid_pos(obj_list)
                 #variable = raw_input('input something!: ')
 
+        #re-compute collision graphics
+        item_lists.update_info()
          
         #post-processing
         collision_free , num_infeasible = item_lists.num_infeasible()
-        print 'number of infeasible objects are: ', num_infeasible
+        allfit = num_infeasible == 0 
+        #print 'number of infeasible objects are: ', num_infeasible
+
+        
         if not collision_free:
             post_process(obj_list,item_lists,xmin,xmax,ymin,ymax)
+        
+
         #variable = raw_input('after post processing: ')
         #for i in range(num_objects):
         #    print 'object [', i ,'] at ', obj_list[i].get_position()
@@ -79,23 +89,37 @@ def SDG_tiling(circ_list,poly_list,template,animator = None,item_lists =None):
         #comparsion for convergence
         update_centroid_pos = obtain_centroid_pos(obj_list)
 
-<<<<<<< HEAD
-        # print 'update_centroid_pos= ',update_centroid_pos
-=======
         #print 'update_centroid_pos= ',update_centroid_pos
->>>>>>> cbdb82be3142da3fda5009e9f28799d4357c0951
         converge = np.sum(np.sum((centroid_pos - update_centroid_pos)**2)) /(num_objects+0.0) <tol
 
-        # print 'local converge =', np.sum(np.sum((centroid_pos - update_centroid_pos)**2)) /(num_objects+0.0)
+        #print 'local converge =', np.sum(np.sum((centroid_pos - update_centroid_pos)**2)) /(num_objects+0.0)
         centroid_pos = copy.deepcopy(update_centroid_pos)
 
+        #graphics
+        animator.update_circular_objects(item_lists.circ_position,item_lists.circ_collision,0.0001)
+        animator.update_polygon_objects(item_lists.poly_verts,item_lists.poly_collision,0.0001)
+        total_covered_area = item_lists.compute_total_covered_area()
+        animator.show_title(total_covered_area,40)
 
-    # print centroid_pos
-    # print update_centroid_pos
-    # print 'error =',  np.sum(np.sum((centroid_pos - update_centroid_pos)**2)) /(num_objects+0.0)
-    # print 'return solution after ', iterate, 'iterations'
-    #return the updated object list and convergence flag
-    return circ_list, poly_list, converge
+        plt.savefig('final_result.png')
+
+        print 'current iteration is:', iterate
+
+
+    #prepare the solution
+    incl_circ_list = []
+    incl_poly_list = []
+    for i in range(item_lists.num_circles):
+        if item_lists.circ_collision[i] == False:
+            incl_circ_list.append(item_lists.circles[i])
+
+    for i in range(item_lists.num_polygons):
+        if item_lists.poly_collision[i] == False:
+            incl_poly_list.append(item_lists.polygons[i])
+
+    #save a picture
+
+    return incl_circ_list, incl_poly_list, total_covered_area, allfit
 
 def compute_update_order(obj_list):
     dist_to_origin_vec = np.zeros(len(obj_list),dtype = 'float')
@@ -117,9 +141,9 @@ def post_process(obj_list,item_lists,xmin,xmax,ymin,ymax):
         obj_d_lim = min(obj_d_lim,d)
         obj_u_lim = max(obj_u_lim,u)
 
-    print 'limits are:', obj_l_lim, obj_r_lim, obj_d_lim, obj_u_lim
-    for i in range(len(obj_list)):
-        print 'object[', i, '] at ', obj_list[i].get_position()
+    #print 'limits are:', obj_l_lim, obj_r_lim, obj_d_lim, obj_u_lim
+    #for i in range(len(obj_list)):
+    #    print 'object[', i, '] at ', obj_list[i].get_position()
   
     # compute new boundary
     dx = 0.0
@@ -144,10 +168,6 @@ def post_process(obj_list,item_lists,xmin,xmax,ymin,ymax):
     delta_vec = np.zeros((num_objects,2),dtype = 'float')
     delta_vec[:,0] += dx;  delta_vec[:,1] += dy
     item_lists.update_delta_pos(delta_vec)
-
-    #2. mutate outside objects
-
-    #ariable = raw_input('input something!: ')
     
 
 ''' function that copies all centroid positions of the object into a numpy array through DEEPCOPY'''
@@ -173,7 +193,6 @@ def restrict_disp(disp,obj_list,ind,xmin,xmax,ymin,ymax,num_iter):
 
     extended_template = np.array([xmin,1000,ymin,1000])
     if if_collision_free(obj_list,ind,temp_obj) and (True or temp_obj.isIn_template(extended_template)):
-        print 'ok to move entire distance, no collision'
         return disp, True
 
     #otherwise, need to find the closest point
@@ -200,7 +219,7 @@ def restrict_disp(disp,obj_list,ind,xmin,xmax,ymin,ymax,num_iter):
         #  'to position', temp_obj.get_position(), 'with delta_mag =', delta_mag, 'total_disp_mag= ', total_disp_mag
 
         #print 'will be inside template= ', temp_obj.isIn_template(extended_template)
-        if if_collision_free(obj_list,ind,temp_obj) and (True or temp_obj.isIn_template(extended_template)):
+        if if_collision_free(obj_list,ind,temp_obj):
             total_disp_mag += delta_mag
         else:
             temp_obj.increment_pos(-delta_mag*disp_dir)
@@ -259,7 +278,7 @@ def SDG_update(obj_list,ind,xmin,xmax,ymin,ymax):
     origin = np.array([0,0])
     #compute displacement due to global potenial
     disp = -K * (obj.get_position() - origin)
-    print 'position = ', obj.get_position()
+    #print 'position = ', obj.get_position()
    
     #compute influence due to other selected objects
     for neighbor_ind in neighbor_indices:
@@ -267,7 +286,7 @@ def SDG_update(obj_list,ind,xmin,xmax,ymin,ymax):
         local_dir = obj.centroid_dir(obj_list[neighbor_ind])
         disp -= G * obj_list[neighbor_ind].area / obj.centroid_dist(obj_list[neighbor_ind]) * local_dir
 
-    # print 'initial disp =', disp
+    #print 'initial disp =', disp
     #restrict the magnitude of disp to avoid collision
     
     proceed_flag = False
@@ -278,11 +297,11 @@ def SDG_update(obj_list,ind,xmin,xmax,ymin,ymax):
 
         if not proceed_flag:
             if not obj_list[ind].isIn_template(template):
-                print "...outside needs re-search...........",ind, obj_list[ind].get_position()
+                #print "...outside needs re-search...........",ind, obj_list[ind].get_position()
                 #variable = raw_input('input something!: ')
                 disp = mutate_direction(disp,obj_list[ind].area)
             else:
-                print "...inside needs re-search.......", ind, obj_list[ind].get_position()
+                #print "...inside needs re-search.......", ind, obj_list[ind].get_position()
                 if np.random.rand(1)>0.8:
                     disp = mutate_direction_short(disp,obj_list[ind])
                 else:
@@ -293,8 +312,7 @@ def SDG_update(obj_list,ind,xmin,xmax,ymin,ymax):
     #final_disp= restrict_disp(disp,obj_list,ind,xmin,xmax,ymin,ymax)
     #variable = raw_input('input something!: ')
 
-    # print 'object [',ind, '] increments by', disp
-    print 'object [',ind, '] increments by', final_disp
+    #print 'object [',ind, '] increments by', final_disp
 
     #update position of object
     #obj_list[ind].increment_pos(disp)
@@ -352,7 +370,7 @@ def initialize_tiling_positions(obj_list,xmin,xmax,ymin,ymax):
         obj_list[i].set_pos(np.array([init_x,init_y]))
         #obj_list[i].set_pos(np.abs(np.array([init_x,init_y])) +np.array([xmin,ymin]))
 
-        print 'initial positon for ', i, 'th object is at', np.abs(np.array([init_x,init_y])) +np.array([xmin,ymin])
+        #print 'initial positon for ', i, 'th object is at', np.abs(np.array([init_x,init_y])) +np.array([xmin,ymin])
 
         #untangle collision with boundary
         #obj_list[i].untangle_template([xmin,1000,ymin,1000])
@@ -361,10 +379,10 @@ def initialize_tiling_positions(obj_list,xmin,xmax,ymin,ymax):
         #detect and untangle collision
         for j in range(i):
             if obj_list[i].ifCollide(obj_list[j]):
-                print 'initialization collision!!'
+                #print 'initialization collision!!'
                 obj_list[i].untangle_collision(obj_list[j])
 
-    print 'initialize center positions =' ,  obtain_centroid_pos(obj_list)
+    #print 'initialize center positions =' ,  obtain_centroid_pos(obj_list)
                    
     return obj_list
 
@@ -372,7 +390,7 @@ def initialize_tiling_positions(obj_list,xmin,xmax,ymin,ymax):
 
 #driver script
 if __name__ == '__main__':
-    # print 'stochastic gradient descent starts...'
+    print 'stochastic gradient descent starts...'
 
 
    
@@ -428,8 +446,6 @@ if __name__ == '__main__':
     poly_list_short = [poly1]
     #use stochastic methods to tile all items and return the convergene flag
 
-    incl_circ, incl_poly, converge = SDG_tiling(circ_list,poly_list,template)
-    # print 'method has converged = ', converge
     #incl_circ, incl_poly, converge = SDG_tiling(circ_list,poly_list,template)
     #print 'method has converged = ', converge
 
@@ -482,8 +498,7 @@ if __name__ == '__main__':
 
     animator.show_title(50,0.4)
 
-    circ_list, poly_list, converge = SDG_tiling(circ_list,poly_list,template,animator,item_lists)
+    circ_list, poly_list, area, converge = SDG_tiling(circ_list,poly_list,template,animator,item_lists)
 
-
-    
-
+    print 'solution: ', 'total area = ', area, 'number of circles = ', len(circ_list), 'number of polygons = ', len(poly_list),\
+          'all items included = ', converge
