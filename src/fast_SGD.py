@@ -101,8 +101,6 @@ def SDG_tiling(circ_list,poly_list,template,animator = None,item_lists =None):
         total_covered_area = item_lists.compute_total_covered_area()
         animator.show_title(total_covered_area,40)
 
-        plt.savefig('final_result.png')
-
         print 'current iteration is:', iterate
 
 
@@ -117,8 +115,13 @@ def SDG_tiling(circ_list,poly_list,template,animator = None,item_lists =None):
         if item_lists.poly_collision[i] == False:
             incl_poly_list.append(item_lists.polygons[i])
 
-    #save a picture
+    plt.savefig('final_result.png')
 
+    while True:
+            animator.show_title(10000,0.1)
+            time.sleep(1)
+
+    #save a picture
     return incl_circ_list, incl_poly_list, total_covered_area, allfit
 
 def compute_update_order(obj_list):
@@ -499,6 +502,11 @@ if __name__ == '__main__':
     animator.show_title(50,0.4)
 
     circ_list, poly_list, area, converge = SDG_tiling(circ_list,poly_list,template,animator,item_lists)
-
+    
     print 'solution: ', 'total area = ', area, 'number of circles = ', len(circ_list), 'number of polygons = ', len(poly_list),\
           'all items included = ', converge
+
+    #plt.show()
+    #while True:
+    #    animator.show_title(10000,0.1)
+    #    time.sleep(0.1)
