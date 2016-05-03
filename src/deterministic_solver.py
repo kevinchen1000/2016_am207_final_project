@@ -184,11 +184,14 @@ if __name__  == '__main__' :
     poly14 = obj_polygon([(0,0),(2,0),(3,1.5),(2,3),(0,3),(-1,1.5),(0,0)],np.array([0.0,0.0]))
     poly15 = obj_polygon([(0,0),(2,0),(3,1.5),(2,3),(0,3),(-1,1.5),(0,0)],np.array([0.0,0.0]))
 
+    poly16 = obj_polygon([(0,0),(2,0),(2,15),(0,15),(0,0)],np.array([0.0,0.0]))
+
     #form arrays of objects
     circ_list= [circ1,circ2,circ3,circ4,circ5,circ6,circ7,circ8,\
                 circ9,circ10,circ11,circ12,circ13,circ14,circ15]
     poly_list= [poly1,poly2,poly3,poly4,poly5,poly6,poly7,poly8,\
-                poly9,poly10,poly11,poly12,poly13,poly14,poly15]
+                poly9,poly10,poly11,poly12,poly13,poly14,poly15,\
+                poly16]
 
     #formulate a list and do all pre-processing (finding distance + collision, etc)
     template = np.array([-10.0,10.0,-10.0,10.0])
@@ -216,5 +219,7 @@ if __name__  == '__main__' :
 
     #for i in range(len(item_lists.poly_collision)):
     #    item_lists.poly_collision[i] = False
+    #animator.show_title(42.2544,100)
     animator.add_polygon_objects(item_lists.poly_verts,\
-                                  item_lists.poly_collision,100)
+                                  item_lists.poly_collision,50)
+    

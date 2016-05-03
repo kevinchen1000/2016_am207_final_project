@@ -1,5 +1,5 @@
 #stochastic gradient descent solver (no graphics fast)
-
+from generate_input import *
 from objects import *
 from animation import *
 import numpy as np
@@ -116,8 +116,8 @@ def SDG_tiling(circ_list,poly_list,template,num_iter,animator = None,item_lists 
 
         #print 'current iteration is:', iterate
 
-        title_string = 'results/final_result' + str(iterate) + '.png'
-        plt.savefig(title_string)
+        #title_string = 'results/final_result' + str(iterate) + '.png'
+        #plt.savefig(title_string)
 
 
     #prepare the solution
@@ -131,7 +131,7 @@ def SDG_tiling(circ_list,poly_list,template,num_iter,animator = None,item_lists 
         if item_lists.poly_collision[i] == False:
             incl_poly_list.append(item_lists.polygons[i])
 
-    #plt.savefig('final_result.png')
+    plt.savefig('final_result.png')
 
     #while True:
     #        animator.show_title(10000,0.1)
@@ -437,7 +437,7 @@ if __name__ == '__main__':
 
 
    
-
+    '''
     #initialize a few circles and polygon objects
     circ1 = obj_circle(np.array([0.0,0.0]),0.8)
     circ2 = obj_circle(np.array([0.0,0.0]),0.9)
@@ -481,12 +481,17 @@ if __name__ == '__main__':
     poly_list= [poly1,poly2,poly3,poly4,poly5,poly6,poly7,poly8,\
                 poly9,poly10,poly11,poly12,poly13,poly14,poly15]
 
+    '''
+    circ_list,poly_list = median_input_set()
+
     #formulate a list and do all pre-processing (finding distance + collision, etc)
     template = np.array([-10.0,10.0,-10.0,10.0])
 
     #debug
-    circ_list_short = [circ1]
-    poly_list_short = [poly1]
+    #circ1 = obj_circle(np.array([0.0,0.0]),0.8)
+    #poly1 = obj_polygon([(0,0),(3,0),(3,2),(0,2),(0,0)],np.array([0.0,0.0]))
+    #circ_list_short = [circ1]
+    #poly_list_short = [poly1]
     #use stochastic methods to tile all items and return the convergene flag
 
     #incl_circ, incl_poly, converge = SDG_tiling(circ_list,poly_list,template)

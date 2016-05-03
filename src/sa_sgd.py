@@ -1,5 +1,6 @@
 from input import *
-from SDG import *
+#from SDG import *
+from fast_SGD import *
 from animation import *
 import copy
 
@@ -49,7 +50,20 @@ def propose_subset(target_area, input_object_list):
         # ---------------------------
         # run SGD to see if feasible
         # ---------------------------
-        propose_circle, propose_poly, converge = SDG_tiling(subset_circle, subset_poly, template)
+        item_lists = object_lists(subset_circle,subset_poly,template)
+        animator = Animator(20,20)
+        animator.add_circular_objects(item_lists.circ_diameter,\
+                                  item_lists.circ_position,\
+                                  item_lists.circ_collision,0.1)
+
+                
+        animator.add_polygon_objects(item_lists.poly_verts,\
+                                 item_lists.poly_collision,0.1)
+
+        propose_circle, propose_poly, area, converge, potential_vec = \
+        SDG_tiling(subset_circle, subset_poly, template,30,animator,item_lists)
+
+        matplotlib.pyplot.close("all")
 
     return propose_circle, propose_poly
 
