@@ -1,5 +1,5 @@
 #stochastic gradient descent solver (no graphics fast)
-from generate_input import *
+from generate_input_r1 import *
 from objects import *
 from animation import *
 import numpy as np
@@ -482,10 +482,10 @@ if __name__ == '__main__':
                 poly9,poly10,poly11,poly12,poly13,poly14,poly15]
 
     '''
-    circ_list,poly_list = median_input_set()
+    circ_list,poly_list,item_lists,template = large_input_set()
 
     #formulate a list and do all pre-processing (finding distance + collision, etc)
-    template = np.array([-10.0,10.0,-10.0,10.0])
+    #template = np.array([-10.0,10.0,-10.0,10.0])
 
     #debug
     #circ1 = obj_circle(np.array([0.0,0.0]),0.8)
@@ -535,7 +535,7 @@ if __name__ == '__main__':
 
     #complex version (30 objects....)
     
-    item_lists = object_lists(circ_list,poly_list,template)
+    #item_lists = object_lists(circ_list,poly_list,template)
     animator.add_circular_objects(item_lists.circ_diameter,\
                                   item_lists.circ_position,\
                                   item_lists.circ_collision,0.1)

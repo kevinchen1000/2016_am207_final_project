@@ -606,6 +606,14 @@ class object_lists:
                 
         return total_area
 
+    def total_area(self):
+        total_area = 0
+        obj_list = self.circles + self.polygons
+        for i in range((self.num_circles+self.num_polygons)):
+            total_area += obj_list[i].area
+                
+        return total_area
+
 
 
 
