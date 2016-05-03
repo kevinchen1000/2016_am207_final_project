@@ -10,7 +10,7 @@ import math
 #circ_list : array of circle objects
 #poly_list : array of polygon objects
 #template : numpy array of [xmin,xmax,ymin,ymax]
-def SDG_tiling(circ_list,poly_list,template,animator = None,item_lists =None):
+def SDG_tiling(circ_list,poly_list,template,num_iter,animator = None,item_lists =None):
     obj_list = circ_list + poly_list
     num_objects = len(circ_list)+len(poly_list)
 
@@ -20,7 +20,7 @@ def SDG_tiling(circ_list,poly_list,template,animator = None,item_lists =None):
     #initialize arrangement at T = 0  
     #-->enforce no collision but may cross boundary of template (infeasible)
 
-    num_iter =1000
+    #num_iter =1000
     iterate = 0
     tol = 1e-5
     converge = False
@@ -29,6 +29,12 @@ def SDG_tiling(circ_list,poly_list,template,animator = None,item_lists =None):
     centroid_pos = np.zeros((num_objects,2) ,dtype = 'float')
     initialize_tiling_positions(obj_list,xmin,xmax,ymin,ymax)
 
+    K = 0.1*3
+    G = -0.1*0.05
+    init_potential = compute_potential(obj_list,K,G)
+    potential_vec= []
+    potential_vec.append(init_potential
+)
     #initialize to screen
     if animator is not None:
         init_pos =  obtain_centroid_pos(obj_list)
@@ -48,7 +54,14 @@ def SDG_tiling(circ_list,poly_list,template,animator = None,item_lists =None):
             #print 'before updating, positions =' ,  obtain_centroid_pos(obj_list)
             #delta_vec = np.zeros((num_objects,2),dtype = 'float')
             delta_x = SDG_update(obj_list,update_order[i],xmin,xmax,ymin,ymax)
+
+            old_obj_potential =single_obj_potential(obj_list,update_order[i],K,G)
             obj_list[update_order[i]].increment_pos(delta_x)
+            new_obj_potential =single_obj_potential(obj_list,update_order[i],K,G)
+
+            #print 'delta_value=', new_obj_potential, old_obj_potential
+
+            potential_vec.append(potential_vec[-1]+new_obj_potential-old_obj_potential)
             #delta_vec[update_order[i],:] = delta_x
 
             #item_lists.update_delta_pos(delta_vec)
@@ -101,7 +114,10 @@ def SDG_tiling(circ_list,poly_list,template,animator = None,item_lists =None):
         total_covered_area = item_lists.compute_total_covered_area()
         animator.show_title(total_covered_area,40)
 
-        print 'current iteration is:', iterate
+        #print 'current iteration is:', iterate
+
+        title_string = 'results/final_result' + str(iterate) + '.png'
+        plt.savefig(title_string)
 
 
     #prepare the solution
@@ -115,14 +131,38 @@ def SDG_tiling(circ_list,poly_list,template,animator = None,item_lists =None):
         if item_lists.poly_collision[i] == False:
             incl_poly_list.append(item_lists.polygons[i])
 
-    plt.savefig('final_result.png')
+    #plt.savefig('final_result.png')
 
-    while True:
-            animator.show_title(10000,0.1)
-            time.sleep(1)
+    #while True:
+    #        animator.show_title(10000,0.1)
+    #        time.sleep(1)
 
     #save a picture
-    return incl_circ_list, incl_poly_list, total_covered_area, allfit
+    return incl_circ_list, incl_poly_list, total_covered_area, allfit,potential_vec
+
+
+'''compute the potential function'''
+def compute_potential(obj_list,K,G):
+    potential =0.0
+    for i in range(len(obj_list)):
+        for j in range(len(obj_list)):
+            if i==j:
+                potential += 0.5 * K * np.linalg.norm(obj_list[i].get_position())**2
+            else:
+                potential += G * obj_list[j].area / np.linalg.norm(obj_list[i].get_position()-obj_list[j].get_position())
+
+    return potential
+
+'''update the potential function '''
+def single_obj_potential(obj_list,ind,K,G):
+    potential =0.0
+    for j in range(len(obj_list)):
+        if ind==j:
+            potential += 0.5 * K * np.linalg.norm(obj_list[ind].get_position())**2
+        else:
+            potential += G * obj_list[j].area / np.linalg.norm(obj_list[ind].get_position()-obj_list[j].get_position())
+    return potential
+
 
 def compute_update_order(obj_list):
     dist_to_origin_vec = np.zeros(len(obj_list),dtype = 'float')
@@ -501,10 +541,17 @@ if __name__ == '__main__':
 
     animator.show_title(50,0.4)
 
-    circ_list, poly_list, area, converge = SDG_tiling(circ_list,poly_list,template,animator,item_lists)
+    circ_list, poly_list, area, converge,potential_vec = SDG_tiling(circ_list,poly_list,template,100,animator,item_lists)
     
     print 'solution: ', 'total area = ', area, 'number of circles = ', len(circ_list), 'number of polygons = ', len(poly_list),\
           'all items included = ', converge
+
+    fig2 = plt.figure()
+    plt.plot(potential_vec)
+    plt.xlabel('move step')
+    plt.ylabel('U')
+    plt.title('stochastic gradient descent')
+    plt.savefig('potential_vec')
 
     #plt.show()
     #while True:
