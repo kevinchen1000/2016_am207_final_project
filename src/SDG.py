@@ -79,17 +79,21 @@ def SDG_tiling(circ_list,poly_list,template,animator = None,item_lists =None):
         #comparsion for convergence
         update_centroid_pos = obtain_centroid_pos(obj_list)
 
+<<<<<<< HEAD
+        # print 'update_centroid_pos= ',update_centroid_pos
+=======
         #print 'update_centroid_pos= ',update_centroid_pos
+>>>>>>> cbdb82be3142da3fda5009e9f28799d4357c0951
         converge = np.sum(np.sum((centroid_pos - update_centroid_pos)**2)) /(num_objects+0.0) <tol
 
-        print 'local converge =', np.sum(np.sum((centroid_pos - update_centroid_pos)**2)) /(num_objects+0.0)
+        # print 'local converge =', np.sum(np.sum((centroid_pos - update_centroid_pos)**2)) /(num_objects+0.0)
         centroid_pos = copy.deepcopy(update_centroid_pos)
 
 
-    print centroid_pos
-    print update_centroid_pos
-    print 'error =',  np.sum(np.sum((centroid_pos - update_centroid_pos)**2)) /(num_objects+0.0)
-    print 'return solution after ', iterate, 'iterations'
+    # print centroid_pos
+    # print update_centroid_pos
+    # print 'error =',  np.sum(np.sum((centroid_pos - update_centroid_pos)**2)) /(num_objects+0.0)
+    # print 'return solution after ', iterate, 'iterations'
     #return the updated object list and convergence flag
     return circ_list, poly_list, converge
 
@@ -263,7 +267,7 @@ def SDG_update(obj_list,ind,xmin,xmax,ymin,ymax):
         local_dir = obj.centroid_dir(obj_list[neighbor_ind])
         disp -= G * obj_list[neighbor_ind].area / obj.centroid_dist(obj_list[neighbor_ind]) * local_dir
 
-    print 'initial disp =', disp
+    # print 'initial disp =', disp
     #restrict the magnitude of disp to avoid collision
     
     proceed_flag = False
@@ -289,6 +293,7 @@ def SDG_update(obj_list,ind,xmin,xmax,ymin,ymax):
     #final_disp= restrict_disp(disp,obj_list,ind,xmin,xmax,ymin,ymax)
     #variable = raw_input('input something!: ')
 
+    # print 'object [',ind, '] increments by', disp
     print 'object [',ind, '] increments by', final_disp
 
     #update position of object
@@ -367,7 +372,7 @@ def initialize_tiling_positions(obj_list,xmin,xmax,ymin,ymax):
 
 #driver script
 if __name__ == '__main__':
-    print 'stochastic gradient descent starts...'
+    # print 'stochastic gradient descent starts...'
 
 
    
@@ -423,6 +428,8 @@ if __name__ == '__main__':
     poly_list_short = [poly1]
     #use stochastic methods to tile all items and return the convergene flag
 
+    incl_circ, incl_poly, converge = SDG_tiling(circ_list,poly_list,template)
+    # print 'method has converged = ', converge
     #incl_circ, incl_poly, converge = SDG_tiling(circ_list,poly_list,template)
     #print 'method has converged = ', converge
 
