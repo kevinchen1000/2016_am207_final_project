@@ -2,6 +2,7 @@
 import pickle
 from matplotlib import pyplot as plt
 from generate_input_r1 import *
+from matplotlib import cm
 
 #driver post-analysis function
 if __name__ == "__main__":
@@ -90,7 +91,7 @@ if __name__ == "__main__":
     plt.hist(test_area,bins,label='area distribution',color='green',alpha=0.5,normed="True")
     plt.xlabel('area')
     plt.ylabel('probability')
-    plt.legend()
+    #plt.legend()
 
     fig3 = plt.figure()
     plt.subplot(3,3,1)
@@ -146,6 +147,40 @@ if __name__ == "__main__":
     plt.xlabel('object aspect ratio')
     plt.ylabel('E_area_not_chosen')
     plt.legend()
+
+    fig4 = plt.figure()
+    plt.subplot(1,2,1)
+    bins = np.arange(220,280,5)
+    plt.title('P(area | item = 46)')
+    ind = 46
+    plt.hist(test_area[test_index[:,ind]==1],bins,label='area distribution',color='green',alpha=0.5,normed="True")
+    plt.xlabel('area')
+    plt.ylabel('probability')
+    #plt.legend()
+
+    plt.subplot(1,2,2)
+    bins = np.arange(220,280,5)
+    plt.title('P(area | item = 40)')
+    ind = 39
+    plt.hist(test_area[test_index[:,ind]==1],bins,label='area distribution',color='green',alpha=0.5,normed="True")
+    plt.xlabel('area')
+    plt.ylabel('probability')
+    #plt.legend()
+
+
+
+    fig5 = plt.figure(figsize=(6,6))
+    ax = fig5.add_subplot(111)
+    ax.set_title("Select probability",fontsize=14)
+    ax.set_xlabel("item area",fontsize=12)
+    ax.set_ylabel("item aspect ratio",fontsize=12)
+    #ax.grid(True,linestyle='-',color='0.75')
+    x = obj_area_vec
+    y = l_w_ratio
+    z = prob_chosen
+
+    sc= ax.scatter(x,y,s=100,c=z, marker = 'o', cmap = cm.jet, edgecolor = 'none');
+    plt.colorbar(sc)
 
     plt.show()
 
