@@ -123,13 +123,16 @@ def SDG_tiling(circ_list,poly_list,template,num_iter,animator = None,item_lists 
     #prepare the solution
     incl_circ_list = []
     incl_poly_list = []
+    index_vec = np.zeros(len(obj_list),dtype ='int')
     for i in range(item_lists.num_circles):
         if item_lists.circ_collision[i] == False:
             incl_circ_list.append(item_lists.circles[i])
+            index_vec[i] = 1
 
     for i in range(item_lists.num_polygons):
         if item_lists.poly_collision[i] == False:
             incl_poly_list.append(item_lists.polygons[i])
+            index_vec[i+len(circ_list)] = 1
 
     plt.savefig('final_result.png')
 
@@ -138,7 +141,7 @@ def SDG_tiling(circ_list,poly_list,template,num_iter,animator = None,item_lists 
     #        time.sleep(1)
 
     #save a picture
-    return incl_circ_list, incl_poly_list, total_covered_area, allfit,potential_vec
+    return incl_circ_list, incl_poly_list, total_covered_area, allfit,potential_vec,index_vec
 
 
 '''compute the potential function'''
@@ -546,7 +549,7 @@ if __name__ == '__main__':
 
     animator.show_title(50,0.4)
 
-    circ_list, poly_list, area, converge,potential_vec = SDG_tiling(circ_list,poly_list,template,100,animator,item_lists)
+    circ_list, poly_list, area, converge,potential_vec,index_vec = SDG_tiling(circ_list,poly_list,template,100,animator,item_lists)
     
     print 'solution: ', 'total area = ', area, 'number of circles = ', len(circ_list), 'number of polygons = ', len(poly_list),\
           'all items included = ', converge
