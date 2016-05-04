@@ -33,6 +33,7 @@ if __name__ == '__main__':
     
     
     for i in range(num_tries):
+        print '..............current iteration is ', i, '................................'
         incl_circ_list, incl_poly_list, area, converge,potential_vec,index_vec = SDG_tiling(circ_list,poly_list,template,100,animator,item_lists)
         index_mat[i,:] = index_vec
         area_vec[i] = area
