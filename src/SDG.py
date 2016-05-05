@@ -11,6 +11,9 @@ import math
 #poly_list : array of polygon objects
 #template : numpy array of [xmin,xmax,ymin,ymax]
 def SDG_tiling(circ_list,poly_list,template,animator = None,item_lists =None):
+
+    #print type(item_lists)
+    #assert(0)
     obj_list = circ_list + poly_list
     num_objects = len(circ_list)+len(poly_list)
 
@@ -79,11 +82,11 @@ def SDG_tiling(circ_list,poly_list,template,animator = None,item_lists =None):
         #comparsion for convergence
         update_centroid_pos = obtain_centroid_pos(obj_list)
 
-<<<<<<< HEAD
+#<<<<<<< HEAD
         # print 'update_centroid_pos= ',update_centroid_pos
-=======
+#=======
         #print 'update_centroid_pos= ',update_centroid_pos
->>>>>>> cbdb82be3142da3fda5009e9f28799d4357c0951
+#>>>>>>> cbdb82be3142da3fda5009e9f28799d4357c0951
         converge = np.sum(np.sum((centroid_pos - update_centroid_pos)**2)) /(num_objects+0.0) <tol
 
         # print 'local converge =', np.sum(np.sum((centroid_pos - update_centroid_pos)**2)) /(num_objects+0.0)
@@ -428,7 +431,7 @@ if __name__ == '__main__':
     poly_list_short = [poly1]
     #use stochastic methods to tile all items and return the convergene flag
 
-    incl_circ, incl_poly, converge = SDG_tiling(circ_list,poly_list,template)
+    #incl_circ, incl_poly, converge = SDG_tiling(circ_list,poly_list,template)
     # print 'method has converged = ', converge
     #incl_circ, incl_poly, converge = SDG_tiling(circ_list,poly_list,template)
     #print 'method has converged = ', converge
