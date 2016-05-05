@@ -41,7 +41,7 @@ def deterministic_FFDH(circ_list,poly_list,template):
     #compute total area
     tot_area = 0
     for i in range(len(ind_to_include)):
-        tot_area +=obj_list[i].area
+        tot_area +=obj_list[ind_to_include[i]].area
 
     print 'total area= ',tot_area , 'with indices', ind_to_include
 
