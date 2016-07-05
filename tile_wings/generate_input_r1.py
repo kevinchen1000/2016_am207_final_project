@@ -17,11 +17,21 @@ def from_file(filename):
         poly_list.append(obj_polygon(verts,offset))
     #form arrays of objects
     circ_list= []
-    template = np.array([-10.0,10.0,-10.0,10.0])
+
+    #template = np.array([-10.0,10.0,-10.0,10.0])
+    temp_dim = 36.0
+    template = np.array([-temp_dim, temp_dim, -temp_dim, temp_dim])
+
     item_lists = object_lists(circ_list,poly_list,template)
 
 
     return circ_list, poly_list, item_lists,template
+
+def save_to_file(filename,poly_lists,indices):
+    offsets =[]
+    for i in range(len(poly_lists)):
+        offsets.append(poly_lists[i].offset)
+    sio.savemat(filename,{'offsets':offsets,'indices':indices})
         
 
 

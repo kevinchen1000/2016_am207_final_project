@@ -27,7 +27,7 @@ def SDG_tiling(circ_list,poly_list,template,num_iter,animator = None,item_lists 
     
     #initialize centroid positions
     centroid_pos = np.zeros((num_objects,2) ,dtype = 'float')
-    initialize_tiling_positions(obj_list,xmin,xmax,ymin,ymax)
+    #initialize_tiling_positions(obj_list,xmin,xmax,ymin,ymax)
 
     K = 0.1*3
     G = -0.1*0.05
@@ -45,7 +45,8 @@ def SDG_tiling(circ_list,poly_list,template,num_iter,animator = None,item_lists 
     allfit = False
 
     #optimization step
-    while (iterate < num_iter and not converge) and not allfit:
+    #while (iterate < num_iter and not converge) and not allfit:
+    while (iterate < num_iter and not converge):
         #print 'start'
         #delta_vec = np.zeros((num_objects,2),dtype = 'float')
         #sequential movement of each object
@@ -77,6 +78,8 @@ def SDG_tiling(circ_list,poly_list,template,num_iter,animator = None,item_lists 
 
         #re-compute collision graphics
         item_lists.update_info()
+        #time.sleep(100)
+        #raw_input()
          
         #post-processing
         collision_free , num_infeasible = item_lists.num_infeasible()
@@ -485,8 +488,8 @@ if __name__ == '__main__':
                 poly9,poly10,poly11,poly12,poly13,poly14,poly15]
 
     '''
-    circ_list,poly_list,item_lists,template = large_input_set()
-    #circ_list,poly_list, item_lists,template = from_file('tiling_test.mat')
+    #circ_list,poly_list,item_lists,template = large_input_set()
+    circ_list,poly_list, item_lists,template = from_file('tiling_test.mat')
     #formulate a list and do all pre-processing (finding distance + collision, etc)
     #template = np.array([-10.0,10.0,-10.0,10.0])
 
@@ -518,7 +521,8 @@ if __name__ == '__main__':
 
 
     #use plotting version
-    animator = Animator(20,20)
+    #animator = Animator(20,20)
+    animator = Animator(2*template[1],2*template[3])
 
     #simple version (only 2 objects....)
     '''
@@ -549,10 +553,16 @@ if __name__ == '__main__':
 
     animator.show_title(50,0.4)
 
-    circ_list, poly_list, area, converge,potential_vec,index_vec = SDG_tiling(circ_list,poly_list,template,100,animator,item_lists)
+    circ_list, poly_list, area, converge,potential_vec,index_vec = SDG_tiling(circ_list,poly_list,template,10,animator,item_lists)
     
     print 'solution: ', 'total area = ', area, 'number of circles = ', len(circ_list), 'number of polygons = ', len(poly_list),\
-          'all items included = ', converge
+          'all items included = ', converge, 'index of included shapes are:', index_vec
+
+    print 'offset =' , poly_list[0].offset, 'verts=', poly_list[0].verts
+
+    #save to file
+    save_to_file('tiled_results.mat',poly_list,index_vec)
+
 
     fig2 = plt.figure()
     plt.plot(potential_vec)
