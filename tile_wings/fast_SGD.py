@@ -10,7 +10,7 @@ import math
 #circ_list : array of circle objects
 #poly_list : array of polygon objects
 #template : numpy array of [xmin,xmax,ymin,ymax]
-def SDG_tiling(circ_list,poly_list,template,num_iter,animator = None,item_lists =None):
+def SDG_tiling(circ_list,poly_list,template,num_iter,animator = None,item_lists =None, template_obs_list = None):
     obj_list = circ_list + poly_list
     num_objects = len(circ_list)+len(poly_list)
 
@@ -128,13 +128,16 @@ def SDG_tiling(circ_list,poly_list,template,num_iter,animator = None,item_lists 
     incl_circ_list = []
     incl_poly_list = []
     index_vec = np.zeros(len(obj_list),dtype ='int')
+
+    print template_obs_list[0].area, template_obs_list[0].pos
+    #print circ_list[0].area, circ_list[0].pos
     for i in range(item_lists.num_circles):
-        if item_lists.circ_collision[i] == False:
+        if item_lists.circ_collision[i] == False and item_lists.circles[i].ifCollide_items(template_obs_list) == False:
             incl_circ_list.append(item_lists.circles[i])
             index_vec[i] = 1
 
     for i in range(item_lists.num_polygons):
-        if item_lists.poly_collision[i] == False:
+        if item_lists.poly_collision[i] == False and item_lists.polygons[i].ifCollide_items(template_obs_list) == False:
             incl_poly_list.append(item_lists.polygons[i])
             index_vec[i+len(circ_list)] = 1
 
@@ -241,14 +244,26 @@ def post_process_feasible_set(obj_list,item_lists,xmin,xmax,ymin,ymax):
     dx = 0.0
     dy = 0.0
     
-    if obj_l_lim > xmin:
-        dx = xmin - obj_l_lim
-    elif obj_r_lim < xmax:
-        dx = xmax - obj_r_lim
-    elif obj_d_lim > ymin:
-        dy = ymin - obj_d_lim
-    elif obj_u_lim < ymax:
-        dy = ymax - obj_u_lim
+    #if obj_l_lim > xmin:
+    #    dx = xmin - obj_l_lim
+    #elif obj_r_lim < xmax:
+    #    dx = xmax - obj_r_lim
+    #elif obj_d_lim > ymin:
+    #    dy = ymin - obj_d_lim
+    #elif obj_u_lim < ymax:
+    #    dy = ymax - obj_u_lim
+
+    dx_l = xmin - obj_l_lim; dx_r = xmax - obj_r_lim
+    if np.abs(dx_l) < np.abs(dx_r):
+        dx = dx_l
+    else:
+        dx = dx_r
+
+    dy_d =  ymin - obj_d_lim; dy_u = ymax - obj_u_lim
+    if np.abs(dy_d) < np.abs(dy_u):
+        dy = dy_d
+    else:
+        dy = dy_u
 
 
     #print 'dx ,dy = ', dx, dy
@@ -596,12 +611,13 @@ if __name__ == '__main__':
 
     animator.show_title(50,0.4)
 
-    circ_list, poly_list, area, converge,potential_vec,index_vec = SDG_tiling(circ_list,poly_list,template,10,animator,item_lists)
+    circ_list, poly_list, area, converge,potential_vec,index_vec = SDG_tiling(circ_list,poly_list,template,10,animator,item_lists,template_obs_list)
     
     print 'solution: ', 'total area = ', area, 'number of circles = ', len(circ_list), 'number of polygons = ', len(poly_list),\
           'all items included = ', converge, 'index of included shapes are:', index_vec
 
-    print 'offset =' , poly_list[0].offset, 'verts=', poly_list[0].verts
+    if len(poly_list) > 0:
+        print 'offset =' , poly_list[0].offset, 'verts=', poly_list[0].verts
 
     #save to file
     save_to_file('tiled_results.mat',poly_list,index_vec)

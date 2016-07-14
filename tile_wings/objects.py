@@ -273,6 +273,14 @@ class obj_circle:
             return self.ifCollide_circle(item)
         return self.ifCollide_polygon(item)
 
+    ''' return if the object collides with any of the objects '''
+    def ifCollide_items(self,items):
+        for i in range(len(items)):
+            if self.ifCollide(items[i]):
+                return True
+
+        return False
+
 #polygon objects
 class obj_polygon:
     ''' initialize offset and vertices of the object'''
@@ -494,6 +502,14 @@ class obj_polygon:
         if isinstance(item,obj_circle):
             return self.ifCollide_circle(item)
         return self.ifCollide_polygon(item)
+
+    ''' return if the object collides with any of the objects '''
+    def ifCollide_items(self,items):
+        for i in range(len(items)):
+            if self.ifCollide(items[i]):
+                return True
+
+        return False
 
     ''' compute distance to a polygon '''
     def isIn_poly(self, pt):

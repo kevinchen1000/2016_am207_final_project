@@ -31,9 +31,9 @@ def from_file(filename):
     template_obs_list = [] 
     radius = 1.0
     for i in range(1,len(template_info)):
-        #print template_info[i]
-        template_obs_list.append(obj_circle(np.array([template_info[i][0][0], \
-                                                      template_info[i][0][1]],'float'),radius))
+        #print template_info[i][0][0][0]
+        template_obs_list.append(obj_circle(np.array([template_info[i][0][0][0], \
+                                                      template_info[i][0][1][0]],'float'),radius))
     
 
     item_lists = object_lists(circ_list,poly_list,template)
