@@ -4,7 +4,9 @@ import scipy.io as sio
 def from_file(filename):
     #load in file
     shape_contents = sio.loadmat(filename)
+    #print shape_contents
     wings_location = shape_contents['wings_location']
+    
     poly_list= []
     for i in range(len(wings_location)):
         xpos = wings_location[i][0][0]
@@ -15,17 +17,29 @@ def from_file(filename):
             verts.append((xpos[j]-xpos[0],ypos[j]-ypos[0]))
 
         poly_list.append(obj_polygon(verts,offset))
+
     #form arrays of objects
     circ_list= []
 
-    #template = np.array([-10.0,10.0,-10.0,10.0])
-    temp_dim = 36.0
+    #load in template information
+    #template_info = shape_contents['template_info']
+    template_info =  shape_contents['template_info']
+    temp_dim = float(template_info[0])
+    #print temp_dim
     template = np.array([-temp_dim, temp_dim, -temp_dim, temp_dim])
+
+    template_obs_list = [] 
+    radius = 1.0
+    for i in range(1,len(template_info)):
+        #print template_info[i]
+        template_obs_list.append(obj_circle(np.array([template_info[i][0][0], \
+                                                      template_info[i][0][1]],'float'),radius))
+    
 
     item_lists = object_lists(circ_list,poly_list,template)
 
 
-    return circ_list, poly_list, item_lists,template
+    return circ_list, poly_list, item_lists,template,template_obs_list
 
 def save_to_file(filename,poly_lists,indices):
     offsets =[]
@@ -163,4 +177,4 @@ def large_input_set():
 if __name__ == '__main__':
     #circ_list,poly_list, item_list,template = median_input_set()
     #circ_list,poly_list, item_list,template = large_input_set()
-    circ_list,poly_list, item_list,template = from_file('tiling_test.mat')
+    circ_list,poly_list, item_list,template,template_obs_list = from_file('tiling_test.mat')

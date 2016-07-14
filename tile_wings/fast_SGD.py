@@ -88,7 +88,8 @@ def SDG_tiling(circ_list,poly_list,template,num_iter,animator = None,item_lists 
 
         
         if not collision_free:
-            post_process(obj_list,item_lists,xmin,xmax,ymin,ymax)
+            #post_process(obj_list,item_lists,xmin,xmax,ymin,ymax)
+            post_process_feasible_set(obj_list,item_lists,xmin,xmax,ymin,ymax)
         
 
         #variable = raw_input('after post processing: ')
@@ -217,6 +218,48 @@ def post_process(obj_list,item_lists,xmin,xmax,ymin,ymax):
     delta_vec = np.zeros((num_objects,2),dtype = 'float')
     delta_vec[:,0] += dx;  delta_vec[:,1] += dy
     item_lists.update_delta_pos(delta_vec)
+
+'''post process the current solution'''
+def post_process_feasible_set(obj_list,item_lists,xmin,xmax,ymin,ymax):
+
+    #1. offset every objects if possible
+    obj_l_lim = 1000; obj_r_lim = -1000; obj_d_lim=1000; obj_u_lim=-1000
+    num_objects = len(obj_list)
+    for i in range(num_objects):
+        l,r,d,u = obj_list[i].find_extreme_pt()
+        if l>xmin and r<xmax and d>ymin and u<ymax:
+            obj_l_lim = min(obj_l_lim,l)
+            obj_r_lim = max(obj_r_lim,r)
+            obj_d_lim = min(obj_d_lim,d)
+            obj_u_lim = max(obj_u_lim,u)
+
+    #print 'limits are:', obj_l_lim, obj_r_lim, obj_d_lim, obj_u_lim
+    #for i in range(len(obj_list)):
+    #    print 'object[', i, '] at ', obj_list[i].get_position()
+  
+    # compute new boundary
+    dx = 0.0
+    dy = 0.0
+    
+    if obj_l_lim > xmin:
+        dx = xmin - obj_l_lim
+    elif obj_r_lim < xmax:
+        dx = xmax - obj_r_lim
+    elif obj_d_lim > ymin:
+        dy = ymin - obj_d_lim
+    elif obj_u_lim < ymax:
+        dy = ymax - obj_u_lim
+
+
+    #print 'dx ,dy = ', dx, dy
+    #variable = raw_input('input something!: ')
+    # shift every objects
+    #for i in range(len(obj_list)):
+    #    obj_list[i].increment_pos(np.array([dx,dy]))
+
+    delta_vec = np.zeros((num_objects,2),dtype = 'float')
+    delta_vec[:,0] += dx;  delta_vec[:,1] += dy
+    item_lists.update_delta_pos(delta_vec)
     
 
 ''' function that copies all centroid positions of the object into a numpy array through DEEPCOPY'''
@@ -231,10 +274,10 @@ def obtain_centroid_pos(obj_list):
     return centroid_pos
 
 ''' function that restricts displacement amplitude to avoid collision'''
-def restrict_disp(disp,obj_list,ind,xmin,xmax,ymin,ymax,num_iter):
+def restrict_disp(disp,obj_list,ind,xmin,xmax,ymin,ymax,num_iter,template):
     disp_mag =  min(10.0,np.linalg.norm(disp))
     disp_dir = disp / disp_mag
-    template = np.array([-10.0,10.0,-10.0,10.0])
+    #template = np.array([-10.0,10.0,-10.0,10.0])
     temp_obj = copy.deepcopy(obj_list[ind])
   
     #detect if there is collision if incremented by full disp
@@ -342,7 +385,7 @@ def SDG_update(obj_list,ind,xmin,xmax,ymin,ymax):
     count_lim = 5
     count =0
     while not proceed_flag and count < count_lim:
-        final_disp, proceed_flag = restrict_disp(disp,obj_list,ind,xmin,xmax,ymin,ymax,10)
+        final_disp, proceed_flag = restrict_disp(disp,obj_list,ind,xmin,xmax,ymin,ymax,10,template)
 
         if not proceed_flag:
             if not obj_list[ind].isIn_template(template):
@@ -352,7 +395,7 @@ def SDG_update(obj_list,ind,xmin,xmax,ymin,ymax):
             else:
                 #print "...inside needs re-search.......", ind, obj_list[ind].get_position()
                 if np.random.rand(1)>0.8:
-                    disp = mutate_direction_short(disp,obj_list[ind])
+                    disp = mutate_direction_short(disp,obj_list[ind],xmax)
                 else:
                     break
                 
@@ -369,7 +412,7 @@ def SDG_update(obj_list,ind,xmin,xmax,ymin,ymax):
     return final_disp
 
 ''' short_range mutate direction'''
-def mutate_direction_short(disp,obj):
+def mutate_direction_short(disp,obj,template_dim):
     theta = math.atan2(disp[1],disp[0])
     dtheta =  (np.random.rand(1)-0.5) * (2-0.5) *np.pi
     #dtheta = np.pi/2
@@ -377,7 +420,7 @@ def mutate_direction_short(disp,obj):
     new_dir = np.array([math.cos(theta+dtheta),math.sin(theta+dtheta)])
     
     l,r,d,u = obj.find_extreme_pt()
-    dist1 = l+10; dist2 = 10 - r; dist3 = d+10; dist4 = 10-u
+    dist1 = l+template_dim; dist2 = template_dim - r; dist3 = d+template_dim; dist4 = template_dim - u
 
     return min(2,dist1,dist2,dist3,dist4) * new_dir
 
@@ -489,7 +532,7 @@ if __name__ == '__main__':
 
     '''
     #circ_list,poly_list,item_lists,template = large_input_set()
-    circ_list,poly_list, item_lists,template = from_file('tiling_test.mat')
+    circ_list,poly_list, item_lists,template,template_obs_list = from_file('tiling_test.mat')
     #formulate a list and do all pre-processing (finding distance + collision, etc)
     #template = np.array([-10.0,10.0,-10.0,10.0])
 
